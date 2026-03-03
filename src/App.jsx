@@ -43,8 +43,8 @@ function dlStatus(dl){
   return{label:`${diff}d`,color:"#6BCB77",urgent:false};
 }
 
-function mkTask(text){return{id:genId(),text,done:false,priority:"media",createdAt:today(),deadline:null,completedAt:null,jiraUrl:"",description:"",checklist:[],contacts:[]};}
-function mkChkItem(text="",collab=""){return{id:genId(),text,state:"Pendiente",deadline:null,collaborator:collab};}
+function mkTask(text){return{id:genId(),text,done:false,priority:"media",createdAt:today(),deadline:null,completedAt:null,jiraUrl:"",description:"",checklist:[],contacts:[],labels:[]};}
+function mkChkItem(text="",collab=""){return{id:genId(),text,state:"Pendiente",deadline:null,collaborator:collab,nextActions:""};}
 
 // 121 Manager: multi-point meeting, carries pending forward
 function mkMeeting(inheritItems=[]){
@@ -63,7 +63,7 @@ const INITIAL=[
   {id:"c2",name:"Transversal",icon:"🤝",colorIdx:2,type:"tasks",tasks:["TSA España: Evaluar necesidad 4 salidas semanales"].map(mkTask)},
   {id:"c3",name:"Equipo",icon:"👥",colorIdx:3,type:"tasks",tasks:["1:1 Con manager","1:1 Con subordinados","Objetivos 2026: Definir OKRs","Objetivos 2026: Bajar a épicas","Objetivos 2026: Sprints en Jira","Matriz Polivalencia: Equilibrio skills","Disponibilidad: Oficina / Teletrabajo / Vacaciones","Shane – Automatización agendas","Pablo – Sobrestock 131","Pablo – Cajas cliente 131","Iván – Reservas B2C","Iván – Post-mortem BF25","Pau – Entrega Grafanas"].map(mkTask)},
   {id:"c4",name:"Data & Operación",icon:"⚡",colorIdx:5,type:"tasks",tasks:["Influx + Grafana (real time)","PL/SQL producción","Databricks + Radar (histórico)","Reporting producción no cubierto","Herramientas Python → Entorno IT"].map(mkTask)},
-  {id:"c5",name:"121 Manager",icon:"👤",colorIdx:6,type:"meeting",tasks:[]},
+  {id:"c5",name:"121 Manager",icon:"🎙️",colorIdx:6,type:"meeting",tasks:[]},
   {id:"c6",name:"121 Equipo",icon:"🗓️",colorIdx:7,type:"meeting121eq",tasks:[]},
 ];
 
@@ -81,15 +81,15 @@ function exportHistorial(doneTasks){
   downloadCSV(`historial_${today()}.csv`,[h,...doneTasks.map(t=>[t.text||"",t.catName||"",t.createdAt||"",t.completedAt||"",t.deadline||"",t.priority||""])]);
 }
 function exportMeeting(meeting,catName){
-  const h=["Reunión","Categoría","Colaborador","Fecha","Día","Estado","Punto","Est.Punto","Deadline Punto","Arrastrado"];
-  const rows=(meeting.checklist||[]).map(i=>[meeting.meetingId,catName,meeting.collaborator||"",meeting.date,meeting.day,meeting.state,i.text,i.state,i.deadline||"",i.carriedFrom?"Sí":"No"]);
+  const h=["Reunión","Categoría","Colaborador","Fecha","Día","Estado","Punto","Est.Punto","Deadline Punto","Próx. Acción","Arrastrado"];
+  const rows=(meeting.checklist||[]).map(i=>[meeting.meetingId,catName,meeting.collaborator||"",meeting.date,meeting.day,meeting.state,i.text,i.state,i.deadline||"",i.nextActions||"",i.carriedFrom?"Sí":"No"]);
   downloadCSV(`reunion_${meeting.meetingId}.csv`,[h,...rows]);
 }
 function exportAllMeetings(cats){
-  const h=["Reunión","Categoría","Colaborador","Fecha","Día","Estado","Punto","Est.Punto","Deadline Punto","Arrastrado"];
+  const h=["Reunión","Categoría","Colaborador","Fecha","Día","Estado","Punto","Est.Punto","Deadline Punto","Próx. Acción","Arrastrado"];
   const rows=[];
   cats.filter(c=>c.type==="meeting"||c.type==="meeting121eq").forEach(cat=>{
-    cat.tasks.forEach(m=>(m.checklist||[]).forEach(i=>rows.push([m.meetingId,cat.name,m.collaborator||"",m.date,m.day,m.state,i.text,i.state,i.deadline||"",i.carriedFrom?"Sí":"No"])));
+    cat.tasks.forEach(m=>(m.checklist||[]).forEach(i=>rows.push([m.meetingId,cat.name,m.collaborator||"",m.date,m.day,m.state,i.text,i.state,i.deadline||"",i.nextActions||"",i.carriedFrom?"Sí":"No"])));
   });
   downloadCSV(`todas_reuniones_${today()}.csv`,[h,...rows]);
 }
@@ -140,16 +140,23 @@ function MeetingChecklist({items=[],color,th,onChange}){
         const s=cst(item.state,dark);const dl=dlStatus(item.deadline);
         return(
           <div key={item.id} style={{marginBottom:6,padding:"7px 9px",borderRadius:9,background:th.subBg,border:`1px solid ${item.carriedFrom?"#FF9F4333":th.border2}`}}>
+            {/* Row 1: state + text + deadline badge + delete */}
             <div style={{display:"flex",alignItems:"center",gap:7}}>
               <button onClick={()=>cycleState(item.id)} style={{flexShrink:0,padding:"2px 8px",borderRadius:99,fontSize:10,fontWeight:700,cursor:"pointer",border:`1.5px solid ${s.color}`,background:s.background,color:s.color,whiteSpace:"nowrap"}}>{s.icon} {item.state}</button>
-              <input value={item.text} onChange={e=>onChange(items.map(i=>i.id===item.id?{...i,text:e.target.value}:i))} style={{flex:1,background:"transparent",border:"none",outline:"none",color:item.state==="Completada"?th.text5:th.text2,fontSize:12.5,textDecoration:item.state==="Completada"?"line-through":"none"}}/>
+              <input value={item.text} onChange={e=>onChange(items.map(i=>i.id===item.id?{...i,text:e.target.value}:i))} placeholder="Descripción del punto..." style={{flex:1,background:"transparent",border:"none",outline:"none",color:item.state==="Completada"?th.text5:th.text2,fontSize:12.5,textDecoration:item.state==="Completada"?"line-through":"none"}}/>
               {dl&&<span style={{fontSize:10,fontWeight:700,color:dl.color,background:dl.color+"22",padding:"1px 6px",borderRadius:99,flexShrink:0}}>{dl.label}</span>}
               {item.carriedFrom&&<span style={{fontSize:9,color:"#FF9F43",background:"#FF9F4322",padding:"1px 5px",borderRadius:3,flexShrink:0}}>anterior</span>}
               <span onClick={()=>onChange(items.filter(i=>i.id!==item.id))} style={{color:th.text6,cursor:"pointer",fontSize:12,flexShrink:0}}>✕</span>
             </div>
+            {/* Row 2: deadline picker */}
             <div style={{display:"flex",alignItems:"center",gap:6,marginTop:5,paddingLeft:2}}>
-              <span style={{fontSize:10,color:th.text5}}>📅</span>
+              <span style={{fontSize:10,color:th.text5}}>📅 Deadline:</span>
               <input type="date" value={item.deadline||""} onChange={e=>onChange(items.map(i=>i.id===item.id?{...i,deadline:e.target.value||null}:i))} style={{background:"transparent",border:`1px solid ${th.border2}`,borderRadius:5,outline:"none",color:item.deadline?th.text3:th.text6,fontSize:11,padding:"2px 6px",colorScheme:dark?"dark":"light"}}/>
+            </div>
+            {/* Row 3: next actions */}
+            <div style={{display:"flex",alignItems:"flex-start",gap:6,marginTop:5,paddingLeft:2}}>
+              <span style={{fontSize:10,color:th.text5,marginTop:3,flexShrink:0}}>⚡ Próx. acción:</span>
+              <textarea value={item.nextActions||""} onChange={e=>onChange(items.map(i=>i.id===item.id?{...i,nextActions:e.target.value}:i))} placeholder="¿Qué hay que hacer a continuación?" rows={1} style={{flex:1,background:"transparent",border:`1px solid ${th.border2}`,borderRadius:5,outline:"none",color:th.text3,fontSize:11,padding:"3px 7px",resize:"vertical",fontFamily:"inherit",lineHeight:1.4}}/>
             </div>
           </div>
         );
@@ -194,6 +201,41 @@ function Contacts({items=[],color,th,onChange}){
   );
 }
 
+// ── Labels ────────────────────────────────────────────────────
+const LABEL_PALETTE=["#FF6B6B","#FF9F43","#FFD93D","#6BCB77","#4ECDC4","#74B9FF","#C3A6FF","#FD79A8","#A0A0B8"];
+function Labels({labels=[],th,dark,onChange}){
+  const [adding,setAdding]=useState(false);
+  const [nw,setNw]=useState("");
+  const [color,setColor]=useState(LABEL_PALETTE[0]);
+  const add=()=>{if(!nw.trim())return;onChange([...labels,{id:genId(),text:nw.trim(),color}]);setNw("");setAdding(false);};
+  return(
+    <div>
+      <SL th={th}>Etiquetas</SL>
+      <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:6}}>
+        {labels.map(lb=>(
+          <span key={lb.id} style={{display:"inline-flex",alignItems:"center",gap:4,padding:"2px 8px",borderRadius:99,fontSize:11,fontWeight:600,background:lb.color+"22",color:lb.color,border:`1px solid ${lb.color}44`}}>
+            {lb.text}
+            <span onClick={()=>onChange(labels.filter(l=>l.id!==lb.id))} style={{cursor:"pointer",fontSize:10,opacity:0.6,marginLeft:1}}>✕</span>
+          </span>
+        ))}
+        {!adding&&<button onClick={()=>setAdding(true)} style={{padding:"2px 8px",borderRadius:99,fontSize:11,border:`1px dashed ${th.border}`,background:"transparent",color:th.text6,cursor:"pointer"}}>＋ etiqueta</button>}
+      </div>
+      {adding&&(
+        <div style={{display:"flex",flexDirection:"column",gap:7,background:th.subBg,borderRadius:9,padding:"9px 10px",border:`1px solid ${th.border2}`}}>
+          <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
+            {LABEL_PALETTE.map(c=><div key={c} onClick={()=>setColor(c)} style={{width:18,height:18,borderRadius:99,background:c,cursor:"pointer",border:color===c?`2px solid ${th.text}`:"2px solid transparent"}}/>)}
+          </div>
+          <div style={{display:"flex",gap:6}}>
+            <input autoFocus value={nw} onChange={e=>setNw(e.target.value)} onKeyDown={e=>e.key==="Enter"&&add()} placeholder="Nombre de la etiqueta..." style={{...inp(th),flex:1,fontSize:12,padding:"5px 9px"}}/>
+            <button onClick={add} style={{padding:"5px 12px",borderRadius:7,background:color,border:"none",color:"#fff",fontWeight:800,fontSize:12,cursor:"pointer"}}>＋</button>
+            <button onClick={()=>setAdding(false)} style={{padding:"5px 10px",borderRadius:7,background:th.border,border:"none",color:th.text4,fontSize:12,cursor:"pointer"}}>✕</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Task Row ──────────────────────────────────────────────────
 function TaskRow({task,color,th,onToggle,onDelete,onUpdate}){
   const [exp,setExp]=useState(false);const [editT,setEditT]=useState(false);
@@ -211,6 +253,7 @@ function TaskRow({task,color,th,onToggle,onDelete,onUpdate}){
         {task.jiraUrl&&!task.done&&<a href={task.jiraUrl} target="_blank" rel="noreferrer" onClick={e=>e.stopPropagation()} style={{fontSize:10,fontWeight:700,color:"#5E9EFF",background:dark?"#0D1E35":"#EBF4FF",padding:"2px 7px",borderRadius:5,border:"1px solid #1A3A6A",textDecoration:"none",flexShrink:0}}>JIRA ↗</a>}
         {(task.contacts||[]).length>0&&!task.done&&<span style={{fontSize:10,color:th.text4,flexShrink:0}}>👤 {task.contacts.length}</span>}
         {chkT>0&&!task.done&&<span style={{fontSize:10,color:chkD===chkT?"#6BCB77":th.text5,flexShrink:0}}>☑ {chkD}/{chkT}</span>}
+        {(task.labels||[]).map(lb=>(<span key={lb.id} style={{fontSize:10,fontWeight:600,color:lb.color,background:lb.color+"22",padding:"1px 7px",borderRadius:99,flexShrink:0,border:`1px solid ${lb.color}33`}}>{lb.text}</span>))}
         {dl&&!task.done&&<span style={{fontSize:11,fontWeight:700,color:dl.color,background:dl.color+"22",padding:"2px 8px",borderRadius:99,flexShrink:0}}>{dl.label}</span>}
         {!task.done&&<span style={{color:th.text6,fontSize:11,flexShrink:0,transform:exp?"rotate(180deg)":"none",transition:"transform 0.2s"}}>▾</span>}
         <span onClick={e=>{e.stopPropagation();onDelete();}} style={{color:th.text6,cursor:"pointer",fontSize:13,flexShrink:0}}>✕</span>
@@ -223,6 +266,7 @@ function TaskRow({task,color,th,onToggle,onDelete,onUpdate}){
         <div style={{marginBottom:14}}><SL th={th}>Ticket Jira</SL><div style={{display:"flex",gap:7,alignItems:"center"}}><input value={task.jiraUrl||""} onChange={e=>onUpdate({jiraUrl:e.target.value})} placeholder="https://jira.empresa.com/browse/PROJ-123" style={{...inp(th),flex:1,fontFamily:"monospace"}}/>{task.jiraUrl&&<a href={task.jiraUrl} target="_blank" rel="noreferrer" style={{padding:"5px 10px",borderRadius:7,background:dark?"#0D1E35":"#EBF4FF",border:"1px solid #1A3A6A",color:"#5E9EFF",fontSize:12,textDecoration:"none",fontWeight:700,flexShrink:0}}>Abrir ↗</a>}</div></div>
         <div style={{marginBottom:14}}><SL th={th}>Descripción</SL><textarea value={task.description||""} onChange={e=>onUpdate({description:e.target.value})} placeholder="Contexto, notas..." rows={3} style={{width:"100%",boxSizing:"border-box",...inp(th,{resize:"vertical",lineHeight:1.6,fontFamily:"inherit"})}}/></div>
         <div style={{marginBottom:14}}><Checklist items={task.checklist||[]} color={color} th={th} onChange={cl=>onUpdate({checklist:cl})}/></div>
+        <div style={{marginBottom:14}}><Labels labels={task.labels||[]} th={th} dark={dark} onChange={lb=>onUpdate({labels:lb})}/></div>
         <div style={{marginBottom:12}}><Contacts items={task.contacts||[]} color={color} th={th} onChange={ct=>onUpdate({contacts:ct})}/></div>
         <div style={{display:"flex",gap:16,flexWrap:"wrap",paddingTop:10,borderTop:`1px solid ${th.border2}`}}>
           <span style={{color:th.text6,fontSize:10}}>📅 Creada: <span style={{color:th.text4}}>{fmt(task.createdAt)}</span></span>
@@ -389,7 +433,8 @@ function UpcomingGroup({title,tasks,icon,color,th,dark,defaultOpen=false,onNavig
           <span style={{fontSize:12,flexShrink:0}}>{t.catIcon||icon}</span>
           <span style={{flex:1,color:th.text2,fontSize:12.5,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.text||t.action||t.meetingId}</span>
           {t.catName&&<span style={{fontSize:10,color:th.text5,flexShrink:0}}>{t.catName}</span>}
-          {dl&&<span style={{fontSize:11,fontWeight:700,color:dl.color,background:dl.color+"22",padding:"2px 7px",borderRadius:99,flexShrink:0}}>{dl.label}</span>}
+          {t.meetingDate&&<span style={{fontSize:10,color:th.text4,background:th.border2,padding:"2px 7px",borderRadius:99,flexShrink:0}}>📅 {fmt(t.meetingDate)}</span>}
+          {!t.meetingDate&&dl&&<span style={{fontSize:11,fontWeight:700,color:dl.color,background:dl.color+"22",padding:"2px 7px",borderRadius:99,flexShrink:0}}>{dl.label}</span>}
         </div>
       );})}
     </div>
@@ -405,6 +450,7 @@ export default function App(){
   const [editCatId,setEditCatId]=useState(null);const [editCatName,setEditCatName]=useState("");
   const [nText,setNText]=useState({});const [nDl,setNDl]=useState({});const [nPri,setNPri]=useState({});
   const [sortBy,setSortBy]=useState("priority");
+  const [labelFilter,setLabelFilter]=useState({});// catId -> label text | null
 
   const allTasks=cats.flatMap(c=>c.tasks.map(t=>({...t,catId:c.id,catName:c.name,catIcon:c.icon,catColor:gc(COLORS[c.colorIdx],dark),catType:c.type})));
   const doneTasks=allTasks.filter(t=>t.done).sort((a,b)=>(b.completedAt||"").localeCompare(a.completedAt||""));
@@ -416,7 +462,7 @@ export default function App(){
 
   const addTask=(cId)=>{
     const text=nText[cId]?.trim();if(!text)return;
-    setCats(cs=>cs.map(c=>c.id!==cId?c:{...c,tasks:[...c.tasks,{id:genId(),text,done:false,priority:nPri[cId]||"media",createdAt:today(),deadline:nDl[cId]||null,completedAt:null,jiraUrl:"",description:"",checklist:[],contacts:[]}]}));
+    setCats(cs=>cs.map(c=>c.id!==cId?c:{...c,tasks:[...c.tasks,{id:genId(),text,done:false,priority:nPri[cId]||"media",createdAt:today(),deadline:nDl[cId]||null,completedAt:null,jiraUrl:"",description:"",checklist:[],contacts:[],labels:[]}]}));
     setNText(p=>({...p,[cId]:""}));setNDl(p=>({...p,[cId]:""}));
   };
 
@@ -555,8 +601,8 @@ export default function App(){
                 </div>
                 {/* Upcoming grouped */}
                 <h3 style={{color:th.text4,fontSize:12,fontWeight:700,marginBottom:12,marginTop:0}}>Próximas reuniones y vencimientos</h3>
-                {managerCat&&<UpcomingGroup title={managerCat.name} tasks={managerUp.map(m=>({...m,catId:managerCat.id,catIcon:managerCat.icon,text:m.checklist?.length>0?`${m.checklist.length} puntos`:m.meetingId,deadline:m.date}))} icon={managerCat.icon} color={gc(COLORS[managerCat.colorIdx],dark)} th={th} dark={dark} defaultOpen={true} onNavigate={setTab}/>}
-                {equipoCat&&<UpcomingGroup title={equipoCat.name} tasks={equipoUp.map(m=>({...m,catId:equipoCat.id,catIcon:equipoCat.icon,text:m.collaborator||m.meetingId,deadline:m.date}))} icon={equipoCat.icon} color={gc(COLORS[equipoCat.colorIdx],dark)} th={th} dark={dark} defaultOpen={true} onNavigate={setTab}/>}
+                {managerCat&&<UpcomingGroup title={managerCat.name} tasks={managerUp.map(m=>({...m,catId:managerCat.id,catIcon:managerCat.icon,text:m.checklist&&m.checklist.length>0?m.checklist[0].text:`(${m.checklist?.length||0} puntos)`,deadline:null,meetingDate:m.date}))} icon={managerCat.icon} color={gc(COLORS[managerCat.colorIdx],dark)} th={th} dark={dark} defaultOpen={true} onNavigate={setTab}/>}
+                {equipoCat&&<UpcomingGroup title={equipoCat.name} tasks={equipoUp.map(m=>({...m,catId:equipoCat.id,catIcon:equipoCat.icon,text:m.collaborator||(m.checklist&&m.checklist.length>0?m.checklist[0].text:m.meetingId),deadline:null,meetingDate:m.date}))} icon={equipoCat.icon} color={gc(COLORS[equipoCat.colorIdx],dark)} th={th} dark={dark} defaultOpen={true} onNavigate={setTab}/> }
                 {otherUp.length>0&&<UpcomingGroup title="Resto de categorías" tasks={otherUp} icon="📌" color={gc(COLORS[0],dark)} th={th} dark={dark} defaultOpen={false} onNavigate={setTab}/>}
                 {managerUp.length===0&&equipoUp.length===0&&otherUp.length===0&&<p style={{color:th.text6,fontSize:13}}>Sin deadlines próximos.</p>}
               </div>
@@ -565,7 +611,12 @@ export default function App(){
 
           {/* TASKS */}
           {selCat&&selCat.type==="tasks"&&(()=>{
-            const cat=selCat;const color=gc(COLORS[cat.colorIdx],dark);const sorted=sortT(cat.tasks);
+            const cat=selCat;const color=gc(COLORS[cat.colorIdx],dark);
+            // Collect all unique labels in this category
+            const allLabels=[...new Map(cat.tasks.flatMap(t=>(t.labels||[])).map(l=>[l.text,l])).values()];
+            const activeLabelFilter=labelFilter[cat.id]||null;
+            const filtered=cat.tasks.filter(t=>!activeLabelFilter||(t.labels||[]).some(l=>l.text===activeLabelFilter));
+            const sorted=sortT(filtered);
             return(
               <div>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:18,flexWrap:"wrap",gap:10}}>
@@ -575,6 +626,19 @@ export default function App(){
                   </div>
                   <div style={{display:"flex",gap:5}}>{[["priority","Prioridad"],["deadline","Deadline"],["createdAt","Creación"]].map(([k,l])=>(<button key={k} onClick={()=>setSortBy(k)} style={{padding:"4px 11px",borderRadius:99,fontSize:11,cursor:"pointer",border:"none",background:sortBy===k?color.light:th.border2,color:sortBy===k?color.tc:th.text5,fontWeight:sortBy===k?700:400}}>{l}</button>))}</div>
                 </div>
+                {/* Label filter bar */}
+                {allLabels.length>0&&(
+                  <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:12,alignItems:"center"}}>
+                    <span style={{fontSize:10,color:th.text5,fontWeight:700}}>🏷️ Filtrar:</span>
+                    <button onClick={()=>setLabelFilter(p=>({...p,[cat.id]:null}))} style={{padding:"2px 10px",borderRadius:99,fontSize:11,cursor:"pointer",border:`1.5px solid ${!activeLabelFilter?color.accent:th.border}`,background:!activeLabelFilter?color.light:"transparent",color:!activeLabelFilter?color.tc:th.text5,fontWeight:!activeLabelFilter?700:400}}>Todas</button>
+                    {allLabels.map(lb=>(
+                      <button key={lb.id} onClick={()=>setLabelFilter(p=>({...p,[cat.id]:activeLabelFilter===lb.text?null:lb.text}))}
+                        style={{padding:"2px 10px",borderRadius:99,fontSize:11,cursor:"pointer",border:`1.5px solid ${activeLabelFilter===lb.text?lb.color:lb.color+"55"}`,background:activeLabelFilter===lb.text?lb.color+"22":"transparent",color:activeLabelFilter===lb.text?lb.color:th.text4,fontWeight:activeLabelFilter===lb.text?700:400}}>
+                        {lb.text}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 <div style={{background:th.surface2,borderRadius:12,padding:12,marginBottom:16,border:`1px solid ${th.border2}`}}>
                   <div style={{display:"flex",gap:7,marginBottom:8}}>
                     <input value={nText[cat.id]||""} onChange={e=>setNText(p=>({...p,[cat.id]:e.target.value}))} onKeyDown={e=>e.key==="Enter"&&addTask(cat.id)} placeholder="Nueva tarea..." style={{...inp(th),flex:1}}/>
@@ -585,7 +649,7 @@ export default function App(){
                     {Object.entries(PRIORITY).map(([k])=>(<button key={k} onClick={()=>setNPri(p=>({...p,[cat.id]:k}))} style={{padding:"3px 10px",borderRadius:99,fontSize:11.5,cursor:"pointer",...ps(k,(nPri[cat.id]||"media")===k,dark)}}>{PRIORITY[k].dot} {PRIORITY[k].label}</button>))}
                   </div>
                 </div>
-                {sorted.length===0&&<p style={{color:th.text6,fontSize:13,textAlign:"center",paddingTop:28}}>Sin tareas aún 🚀</p>}
+                {sorted.length===0&&<p style={{color:th.text6,fontSize:13,textAlign:"center",paddingTop:28}}>{activeLabelFilter?`Sin tareas con etiqueta "${activeLabelFilter}" 🏷️`:"Sin tareas aún 🚀"}</p>}
                 {sorted.map(t=>(<TaskRow key={t.id} task={t} color={color} th={th} onToggle={()=>togTask(cat.id,t.id)} onDelete={()=>delTask(cat.id,t.id)} onUpdate={p=>updTask(cat.id,t.id,p)}/>))}
               </div>
             );
