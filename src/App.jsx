@@ -318,7 +318,7 @@ function MeetingRow({meeting,color,th,catName,onUpdate,onDelete,onToggle,onExpor
 }
 
 // ── Team Meeting Row (121 Equipo: 1 meeting = 1 collaborator) ─
-function TeamMeetingRow({meeting,color,th,catName,onUpdate,onDelete,onToggle,onExport}){
+function TeamMeetingRow({meeting,color,th,catName,onUpdate,onSetCollaborator,onDelete,onToggle,onExport}){
   const [exp,setExp]=useState(false);
   const dark=th.bg===DARK.bg;const sc=msc(meeting.state,dark);
   const chk=meeting.checklist||[];const comp=chk.filter(i=>i.state==="Completada").length;
@@ -349,7 +349,7 @@ function TeamMeetingRow({meeting,color,th,catName,onUpdate,onDelete,onToggle,onE
         {/* Collaborator field - prominent */}
         <div style={{background:color.light,borderRadius:10,padding:"10px 14px",border:`1px solid ${color.accent}33`}}>
           <SL th={th}>Colaborador</SL>
-          <input value={meeting.collaborator||""} onChange={e=>onUpdate({collaborator:e.target.value})} placeholder="Nombre del colaborador..." style={{...inp(th,{fontSize:14,fontWeight:700,color:color.tc,background:"transparent",border:"none",padding:"0"}),width:"100%"}}/>
+          <input value={meeting.collaborator||""} onChange={e=>onUpdate({collaborator:e.target.value})} onBlur={e=>onSetCollaborator(e.target.value)} placeholder="Nombre del colaborador..." style={{...inp(th,{fontSize:14,fontWeight:700,color:color.tc,background:"transparent",border:"none",padding:"0"}),width:"100%"}}/>
         </div>
         <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
           <div style={{flex:1,minWidth:110}}><SL th={th}>ID</SL><input value={meeting.meetingId} onChange={e=>onUpdate({meetingId:e.target.value})} style={{...inp(th),width:"100%",boxSizing:"border-box",fontFamily:"monospace",color:color.tc}}/></div>
@@ -470,9 +470,11 @@ export default function App(){
   const addMeeting=(cId)=>{
     setCats(cs=>cs.map(c=>{
       if(c.id!==cId)return c;
+      // Capture pending items from current first active meeting BEFORE creating new one
       const lastM=c.tasks.find(t=>!t.done);
       const pendItems=lastM?(lastM.checklist||[]).filter(i=>i.state!=="Completada"&&i.state!=="Bloqueada"):[];
-      return{...c,tasks:[mkMeeting(pendItems),...c.tasks]};
+      const newM=mkMeeting(pendItems);
+      return{...c,tasks:[newM,...c.tasks]};
     }));
   };
 
@@ -480,9 +482,26 @@ export default function App(){
   const addTeamMeeting=(cId)=>{
     setCats(cs=>cs.map(c=>{
       if(c.id!==cId)return c;
-      // Find last meeting for same collaborator (prompt user via collaborator field after creation)
-      // We create empty and let user fill collaborator; carry forward is per collaborator
+      // New empty meeting — user fills collaborator; carry-forward happens when collaborator is set
+      // We create with empty collaborator; pending carry is triggered via onUpdate collaborator change
       return{...c,tasks:[mkTeamMeeting(""),...c.tasks]};
+    }));
+  };
+
+  // When collaborator is set on a team meeting, auto-carry pending items from last meeting with same collaborator
+  const setTeamMeetingCollaborator=(cId,tId,collaborator)=>{
+    setCats(cs=>cs.map(c=>{
+      if(c.id!==cId)return c;
+      const thisMeeting=c.tasks.find(t=>t.id===tId);
+      // Only carry if collaborator just set and checklist is still empty
+      if(!collaborator||(thisMeeting?.checklist||[]).length>0){
+        return{...c,tasks:c.tasks.map(t=>t.id!==tId?t:{...t,collaborator})};
+      }
+      // Find most recent other meeting with same collaborator
+      const prevMeeting=c.tasks.find(t=>t.id!==tId&&!t.done&&t.collaborator===collaborator);
+      const pendItems=prevMeeting?(prevMeeting.checklist||[]).filter(i=>i.state!=="Completada"&&i.state!=="Bloqueada"):[];
+      const inherited=pendItems.map(i=>({...mkChkItem(i.text,collaborator),carriedFrom:true}));
+      return{...c,tasks:c.tasks.map(t=>t.id!==tId?t:{...t,collaborator,checklist:inherited})};
     }));
   };
 
@@ -728,7 +747,7 @@ export default function App(){
                   <div style={{width:30,flexShrink:0}}/>
                 </div>)}
                 {cat.tasks.length===0&&<p style={{color:th.text6,fontSize:13,textAlign:"center",paddingTop:28}}>Sin reuniones. Pulsa "Nueva reunión" para empezar 🗓️</p>}
-                {[...pend,...done].map(m=>(<TeamMeetingRow key={m.id} meeting={m} color={color} th={th} catName={cat.name} onUpdate={p=>updTask(cat.id,m.id,p)} onDelete={()=>delTask(cat.id,m.id)} onToggle={()=>togTask(cat.id,m.id)} onExport={mt=>exportMeeting(mt,cat.name)}/>))}
+                {[...pend,...done].map(m=>(<TeamMeetingRow key={m.id} meeting={m} color={color} th={th} catName={cat.name} onUpdate={p=>updTask(cat.id,m.id,p)} onSetCollaborator={collab=>setTeamMeetingCollaborator(cat.id,m.id,collab)} onDelete={()=>delTask(cat.id,m.id)} onToggle={()=>togTask(cat.id,m.id)} onExport={mt=>exportMeeting(mt,cat.name)}/>))}
               </div>
             );
           })()}
