@@ -710,11 +710,11 @@ function PersonalView({cat,th,dark,calData,onToggle,onDelete,onUpdate,onAddTask}
     {/* ── Section divider ── */}
     <div style={{display:"flex",alignItems:"center",gap:12,margin:"22px 0 16px"}}>
       <div style={{flex:1,height:1,background:th.border2}}/>
-      <span style={{fontSize:11,fontWeight:700,color:th.text5,letterSpacing:1,textTransform:"uppercase",whiteSpace:"nowrap"}}>👥 Equipo esta semana</span>
+      <span style={{fontSize:11,fontWeight:700,color:th.text5,letterSpacing:1,textTransform:"uppercase",whiteSpace:"nowrap"}}>🌿 Tareas por semana</span>
       <div style={{flex:1,height:1,background:th.border2}}/>
     </div>
 
-    {/* ── Section: Mini team calendar ── */}
+    {/* ── Section: Personal tasks calendar ── */}
     <div style={{background:th.surface2,borderRadius:14,padding:14,border:`1px solid ${th.border2}`}}>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
         <span style={{color:th.text5,fontSize:11}}>{semanaLabel} · {fmtShort(weekStart)} – {fmtShort(addDays(weekStart,4))}</span>
@@ -724,62 +724,41 @@ function PersonalView({cat,th,dark,calData,onToggle,onDelete,onUpdate,onAddTask}
           <button onClick={()=>goWeek(1)} style={{padding:"4px 9px",borderRadius:7,border:`1px solid ${th.border}`,background:th.surface,color:th.text3,cursor:"pointer",fontSize:12}}>›</button>
         </div>
       </div>
-      <div style={{overflowX:"auto"}}>
-        <div style={{minWidth:420}}>
-          {/* Day headers */}
-          <div style={{display:"grid",gridTemplateColumns:"90px repeat(5,1fr)",gap:3,marginBottom:3}}>
-            <div/>
-            {weekData.map(({date})=>{
-              const isToday=date===todayStr;
-              const d=new Date(date+"T12:00:00");
-              return(<div key={date} style={{textAlign:"center",padding:"4px 2px",borderRadius:6,background:isToday?dark?"#0D1E35":"#EBF4FF":"transparent",border:isToday?"1px solid #74B9FF44":"1px solid transparent"}}>
-                <div style={{fontSize:10,color:isToday?"#74B9FF":th.text3,fontWeight:600}}>{WEEK_DAYS_ES[d.getDay()-1]||""}</div>
-                <div style={{fontSize:13,fontWeight:800,color:isToday?"#74B9FF":th.text}}>{d.getDate()}</div>
-              </div>);
-            })}
-          </div>
-          {/* Member rows */}
-          {CAL_MEMBERS.map(member=>(
-            <div key={member} style={{display:"grid",gridTemplateColumns:"90px repeat(5,1fr)",gap:3,marginBottom:3}}>
-              <div style={{display:"flex",alignItems:"center",gap:5,padding:"4px 6px",borderRadius:6,background:th.surface,border:`1px solid ${th.border2}`}}>
-                <div style={{width:20,height:20,borderRadius:99,background:"#74B9FF22",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"#74B9FF",flexShrink:0}}>{member[0]}</div>
-                <span style={{fontSize:11,fontWeight:600,color:th.text2}}>{member[0]+member.slice(1).toLowerCase()}</span>
-              </div>
-              {weekData.map(({date,row})=>{
-                const val=row?row[member]:"";
-                const st=getStatus(val);
-                const isEmpty=!val;
-                const isFestivo=val==="F";
-                return(<div key={date} style={{padding:"4px 5px",borderRadius:6,background:isEmpty||isFestivo?th.border3:dark?st.bg:st.bgL,border:`1px solid ${isEmpty||isFestivo?th.border2:st.color+"33"}`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:40,gap:1}}>
-                  {isFestivo?<span style={{fontSize:11}}>🎉</span>:isEmpty?<span style={{fontSize:9,color:th.text6}}>—</span>:<>
-                    <span style={{fontSize:14}}>{st.icon}</span>
-                    <span style={{fontSize:8,fontWeight:700,color:st.color}}>{val.length>5?val.slice(0,5)+"…":val}</span>
-                  </>}
-                </div>);
-              })}
+      {/* Week columns */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:6}}>
+        {weekDates.map(date=>{
+          const isToday=date===todayStr;
+          const d=new Date(date+"T12:00:00");
+          const dayName=WEEK_DAYS_ES[d.getDay()-1]||"";
+          const dayTasks=cat.tasks.filter(t=>!t.done&&t.deadline===date);
+          return(<div key={date} style={{borderRadius:9,background:isToday?dark?"#0D2A1A":"#EDFAEF":th.surface,border:`1.5px solid ${isToday?color.accent+"66":th.border2}`,overflow:"hidden"}}>
+            <div style={{padding:"6px 8px",borderBottom:`1px solid ${th.border2}`,textAlign:"center",background:isToday?color.light:"transparent"}}>
+              <div style={{fontSize:10,fontWeight:600,color:isToday?color.tc:th.text3}}>{dayName}</div>
+              <div style={{fontSize:15,fontWeight:800,color:isToday?color.tc:th.text}}>{d.getDate()}</div>
+              {dayTasks.length>0&&<div style={{fontSize:9,color:color.tc,fontWeight:700}}>{dayTasks.length}</div>}
             </div>
-          ))}
-          {/* OFICINA summary */}
-          <div style={{display:"grid",gridTemplateColumns:"90px repeat(5,1fr)",gap:3,marginTop:5}}>
-            <div style={{display:"flex",alignItems:"center",padding:"4px 6px"}}><span style={{fontSize:9,color:"#111",fontWeight:800,letterSpacing:0.5}}>OFICINA</span></div>
-            {weekData.map(({date,row})=>{
-              if(!row)return<div key={date} style={{borderRadius:6,background:th.border3,border:`1px solid ${th.border2}`}}/>;
-              const allF=CAL_MEMBERS.every(m=>row[m]==="F");
-              if(allF)return<div key={date} style={{borderRadius:6,background:th.border3,border:`1px solid ${th.border2}`,minHeight:30}}/>;
-              const presCount=CAL_MEMBERS.filter(m=>{const s=getStatus(row[m]);return s===CAL_STATUS.P||s===CAL_STATUS.PD;}).length;
-              const ttCount=CAL_MEMBERS.filter(m=>getStatus(row[m])===CAL_STATUS.TT).length;
-              const vacCount=CAL_MEMBERS.filter(m=>getStatus(row[m])===CAL_STATUS.V).length;
-              const low=!allF&&presCount<2;
-              return(<div key={date} style={{padding:"4px 6px",borderRadius:6,background:low?dark?"#2A0808":"#FFF0F0":th.border3,border:`1.5px solid ${low?"#FF6B6B":th.border2}`,display:"flex",flexDirection:"column",gap:2}}>
-                {presCount>0&&<span style={{fontSize:10,fontWeight:700,color:"#111"}}>🏢 {presCount}</span>}
-                {ttCount>0&&<span style={{fontSize:10,fontWeight:700,color:"#111"}}>🏠 {ttCount}</span>}
-                {vacCount>0&&<span style={{fontSize:10,fontWeight:700,color:"#111"}}>🌴 {vacCount}</span>}
-                {low&&<span style={{fontSize:8,color:"#FF6B6B",fontWeight:800}}>⚠️ Bajo</span>}
-              </div>);
-            })}
-          </div>
-        </div>
+            <div style={{padding:"5px",minHeight:50}}>
+              {dayTasks.length===0
+                ?<div style={{textAlign:"center",paddingTop:10,color:th.text6,fontSize:10}}>—</div>
+                :dayTasks.map(t=>{const p=PRIORITY[t.priority];return(
+                  <div key={t.id} style={{marginBottom:4,padding:"4px 6px",borderRadius:6,background:color.light,border:`1px solid ${color.accent}33`}}>
+                    <div style={{fontSize:11,color:th.text2,lineHeight:1.3,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{t.text}</div>
+                    <span style={{fontSize:9}}>{p?.dot}</span>
+                  </div>
+                );})}
+            </div>
+          </div>);
+        })}
       </div>
+      {/* Overdue/future hints */}
+      {(()=>{
+        const over=pend.filter(t=>t.deadline&&t.deadline<weekDates[0]);
+        const fut=pend.filter(t=>t.deadline&&t.deadline>weekDates[4]);
+        return(<>
+          {over.length>0&&<div style={{marginTop:8,fontSize:10,color:"#FF6B6B"}}>⚠️ {over.length} tarea{over.length!==1?"s":""} vencida{over.length!==1?"s":""}</div>}
+          {fut.length>0&&<div style={{marginTop:4,fontSize:10,color:th.text5}}>📅 {fut.length} tarea{fut.length!==1?"s":""} en semanas posteriores</div>}
+        </>);
+      })()}
     </div>
   </div>);
 }
@@ -878,8 +857,8 @@ export default function App(){
 
   // Sidebar item
   const SI=({id,label,icon,cIdx,badge})=>{
-    const isA=tab===id;const color=cIdx!=null?gc(COLORS[cIdx],dark):null;
-    return(<div style={{display:"flex",alignItems:"center",gap:9,padding:"8px 10px",borderRadius:10,cursor:"pointer",background:isA?(color?color.light:th.border2):"transparent",borderLeft:isA?`2px solid ${color?color.accent:"#4ECDC4"}`:"2px solid transparent",marginBottom:2,transition:"all 0.15s"}}
+    const isA=tab===id;const color=cIdx!=null?gc(COLORS[cIdx%COLORS.length],dark):null;
+    return(<div style={{display:"flex",alignItems:"center",gap:9,padding:"8px 10px",borderRadius:10,cursor:"pointer",background:isA?(color?color.light:th.border2):"transparent",borderLeft:isA?`2px solid ${color?color.accent:"#4ECDC4"}`:"2px solid transparent",marginBottom:2,transition:"background 0.1s"}}
       onClick={()=>navigateTo(id)}
       onMouseEnter={e=>{if(!isA)e.currentTarget.style.background=th.border3;}}
       onMouseLeave={e=>{if(!isA)e.currentTarget.style.background="transparent";}}>
@@ -890,7 +869,7 @@ export default function App(){
         )}
         {cIdx!=null&&<div style={{fontSize:10,color:isA?(color?color.tc+"88":th.text5):th.text6}}>{badge} pendiente{badge!==1?"s":""}</div>}
       </div>
-      {badge>0&&cIdx!=null&&<span style={{background:color.accent,color:"#fff",fontSize:10,fontWeight:800,borderRadius:99,padding:"1px 6px",flexShrink:0}}>{badge}</span>}
+      {badge>0&&cIdx!=null&&<span style={{background:color.accent,color:"#fff",fontSize:10,fontWeight:800,borderRadius:99,padding:"1px 6px",flexShrink:0,minWidth:16,textAlign:"center"}}>{badge}</span>}
       {cIdx!=null&&<span onClick={e=>{e.stopPropagation();setEditCatId(id);setEditCatName(label);}} style={{color:th.text6,cursor:"pointer",fontSize:11,flexShrink:0}}>✎</span>}
       {cIdx!=null&&<span onClick={e=>{e.stopPropagation();delCat(id);}} style={{color:th.text6,cursor:"pointer",fontSize:12,flexShrink:0}}>✕</span>}
     </div>);
