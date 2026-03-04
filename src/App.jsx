@@ -521,7 +521,7 @@ function Dashboard({cats,th,dark,onNavigate}){
   });
 
   // Global totals exclude personal and meetings (meetings use checklist counts)
-  const nonMtgCats=cats.filter(c=>c.type==="tasks");
+  const nonMtgCats=cats.filter(c=>!c.type||c.type==="tasks");
   const totalDone=nonMtgCats.reduce((a,c)=>a+c.tasks.filter(t=>t.done).length,0);
   const totalAll=nonMtgCats.reduce((a,c)=>a+c.tasks.length,0);
   const last30=new Date();last30.setDate(last30.getDate()-30);
@@ -588,7 +588,7 @@ function TasksCalendarView({cats,th,dark,onNavigate,personalOnly=false}){
   const tasksByDate={};
   const sourceCats=personalOnly
     ?cats.filter(c=>c.type==="personal")
-    :cats.filter(c=>c.type==="tasks"); // only regular task categories, NOT meetings
+    :cats.filter(c=>!c.type||c.type==="tasks"); // only regular task categories, NOT meetings
 
   sourceCats.forEach(cat=>{
     const color=gc(COLORS[cat.colorIdx],dark);
@@ -793,6 +793,11 @@ export default function App(){
       if(!v)return INITIAL;
       let stored=JSON.parse(v);
       let changed=false;
+      // Migration: assign type:"tasks" to categories with no type
+      stored=stored.map(c=>{
+        if(!c.type){changed=true;return{...c,type:"tasks"};}
+        return c;
+      });
       // Migration: restore special categories if missing
       const specials=[
         {id:"c5",name:"Personal",icon:"🌿",colorIdx:8,type:"personal"},
@@ -995,7 +1000,7 @@ export default function App(){
             const allUpcoming=allTasks.filter(t=>!t.done&&t.deadline).sort((a,b)=>a.deadline.localeCompare(b.deadline));
             const managerUp=managerCat?managerCat.tasks.filter(t=>!t.done).sort((a,b)=>(a.date||"").localeCompare(b.date||"")).slice(0,5):[];
             const equipoUp=equipoCat?equipoCat.tasks.filter(t=>!t.done).sort((a,b)=>(a.date||"").localeCompare(b.date||"")).slice(0,5):[];
-            const otherUp=allUpcoming.filter(t=>{const cat=cats.find(c=>c.id===t.catId);return cat&&cat.type==="tasks";}).slice(0,8);
+            const otherUp=allUpcoming.filter(t=>{const cat=cats.find(c=>c.id===t.catId);return cat&&(!cat.type||cat.type==="tasks");}).slice(0,8);
             return(<div>
               <h2 style={{margin:"0 0 16px",color:th.text,fontSize:17,fontWeight:800}}>Vista General</h2>
               <Dashboard cats={cats} th={th} dark={dark} onNavigate={navigateTo}/>
@@ -1062,7 +1067,7 @@ export default function App(){
           )}
 
           {/* TASKS */}
-          {selCat&&selCat.type==="tasks"&&(()=>{
+          {selCat&&(!selCat.type||selCat.type==="tasks")&&(()=>{
             const cat=selCat;const color=gc(COLORS[cat.colorIdx],dark);
             const allLabels=[...new Map(cat.tasks.flatMap(t=>(t.labels||[])).map(l=>[l.text,l])).values()];
             const activeLF=labelFilter[cat.id]||null;
