@@ -55,7 +55,7 @@ const WEEK_DAYS_ES=["Lunes","Martes","Miércoles","Jueves","Viernes"];
 const ICONS=["💼","🏠","🎯","📚","🌱","🛒","🧠","🎨","💡","🔧","⚡","🤝","👥","📊","🗓️","🎙️","🌿","🔑","💎","🚀"];
 
 function genId(){return Math.random().toString(36).substr(2,9);}
-function today(){return new Date().toISOString().split("T")[0];}
+function today(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
 function fmt(d){if(!d)return"—";return new Date(d+"T00:00:00").toLocaleDateString("es-ES",{day:"2-digit",month:"short",year:"numeric"});}
 function fmtShort(d){if(!d)return"—";return new Date(d+"T00:00:00").toLocaleDateString("es-ES",{day:"2-digit",month:"short"});}
 function dlStatus(dl){
@@ -67,16 +67,17 @@ function dlStatus(dl){
   if(diff<=3)return{label:`${diff}d`,color:"#FFD93D",urgent:false};
   return{label:`${diff}d`,color:"#6BCB77",urgent:false};
 }
+function localISO(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
 function getWeekStart(dateStr){
-  const d=new Date(dateStr+"T00:00:00");
+  const d=new Date(dateStr+"T12:00:00");
   const day=d.getDay();
   const diff=day===0?-6:1-day;
   const mon=new Date(d);mon.setDate(d.getDate()+diff);
-  return mon.toISOString().split("T")[0];
+  return localISO(mon);
 }
 function addDays(dateStr,n){
-  const d=new Date(dateStr+"T00:00:00");d.setDate(d.getDate()+n);
-  return d.toISOString().split("T")[0];
+  const d=new Date(dateStr+"T12:00:00");d.setDate(d.getDate()+n);
+  return localISO(d);
 }
 
 function mkTask(text){return{id:genId(),text,done:false,priority:"media",createdAt:today(),deadline:null,completedAt:null,jiraUrl:"",description:"",checklist:[],contacts:[],labels:[]};}
@@ -688,7 +689,23 @@ function PersonalView({cat,th,dark,onToggle,onDelete,onUpdate,onAddTask}){
 // ── Main App ───────────────────────────────────────────────────
 export default function App(){
   const [dark,setDark]=useState(()=>{try{const v=localStorage.getItem("mdt_dark");return v===null?true:v==="true";}catch{return true;}});
-  const [cats,setCats]=useState(()=>{try{const v=localStorage.getItem("mdt_cats");return v?JSON.parse(v):INITIAL;}catch{return INITIAL;}});
+  const [cats,setCats]=useState(()=>{
+    try{
+      const v=localStorage.getItem("mdt_cats");
+      if(!v)return INITIAL;
+      let stored=JSON.parse(v);
+      // Migration: add Personal category if missing
+      if(!stored.find(c=>c.type==="personal")){
+        const personalCat={id:"c5",name:"Personal",icon:"🌿",colorIdx:8,type:"personal",tasks:[]};
+        // Insert before meeting categories
+        const meetingIdx=stored.findIndex(c=>c.type==="meeting"||c.type==="meeting121eq");
+        if(meetingIdx>=0)stored=[...stored.slice(0,meetingIdx),personalCat,...stored.slice(meetingIdx)];
+        else stored=[...stored,personalCat];
+        localStorage.setItem("mdt_cats",JSON.stringify(stored));
+      }
+      return stored;
+    }catch{return INITIAL;}
+  });
   const th=dark?DARK:LIGHT;
 
   const setCatsP=(fn)=>setCats(prev=>{const next=typeof fn==="function"?fn(prev):fn;try{localStorage.setItem("mdt_cats",JSON.stringify(next));}catch{}return next;});
