@@ -875,10 +875,11 @@ export default function App(){
   // Sidebar item
   const SI=({id,label,icon,cIdx,badge})=>{
     const isA=tab===id;const color=cIdx!=null?gc(COLORS[cIdx%COLORS.length],dark):null;
-    return(<div style={{display:"flex",alignItems:"center",gap:9,padding:"8px 10px",borderRadius:10,cursor:"pointer",background:isA?(color?color.light:th.border2):"transparent",borderLeft:isA?`2px solid ${color?color.accent:"#4ECDC4"}`:"2px solid transparent",marginBottom:2,transition:"background 0.1s"}}
+    const [hov,setHov]=useState(false);
+    return(<div style={{display:"flex",alignItems:"center",gap:9,padding:"8px 10px",borderRadius:10,cursor:"pointer",background:isA?(color?color.light:th.border2):hov?th.border3:"transparent",borderLeft:isA?`2px solid ${color?color.accent:"#4ECDC4"}`:"2px solid transparent",marginBottom:2,transition:"background 0.1s"}}
       onClick={()=>navigateTo(id)}
-      onMouseEnter={e=>{if(!isA)e.currentTarget.style.background=th.border3;}}
-      onMouseLeave={e=>{if(!isA)e.currentTarget.style.background="transparent";}}>
+      onMouseEnter={()=>setHov(true)}
+      onMouseLeave={()=>setHov(false)}>
       <span style={{fontSize:16}}>{icon}</span>
       <div style={{flex:1,minWidth:0}}>
         {editCatId===id?(<input autoFocus value={editCatName} onChange={e=>setEditCatName(e.target.value)} onBlur={()=>saveCatName(id)} onKeyDown={e=>{if(e.key==="Enter"||e.key==="Escape")saveCatName(id);}} onClick={e=>e.stopPropagation()} style={{background:"transparent",border:`1px solid ${color?color.accent:"#4ECDC4"}`,borderRadius:5,outline:"none",color:th.text,fontSize:12.5,fontWeight:700,width:"100%",padding:"1px 4px"}}/>):(
@@ -892,7 +893,7 @@ export default function App(){
     </div>);
   };
 
-  const sidebarJSX=(<div style={{padding:"13px 10px 10px"}}>
+  const mkSidebar=()=>(<div style={{padding:"13px 10px 10px"}}>
     <p style={{margin:"0 0 7px 6px",color:th.text6,fontSize:10,fontWeight:700,letterSpacing:2,textTransform:"uppercase"}}>Navegación</p>
     <SI id="overview" label="Vista General" icon="◫" badge={0}/>
     <SI id="cal-equipo" label="Calendario equipo" icon="👥" badge={0}/>
@@ -945,7 +946,7 @@ export default function App(){
       {mobileSidebarOpen&&<div style={{position:"fixed",inset:0,zIndex:200,display:"flex"}}>
         <div style={{width:240,background:th.sidebar,borderRight:`1px solid ${th.border3}`,overflowY:"auto",boxShadow:"4px 0 20px #0006"}}>
           <div style={{display:"flex",justifyContent:"flex-end",padding:"10px 10px 0"}}><button onClick={()=>setMobileSidebarOpen(false)} style={{background:"none",border:"none",color:th.text3,fontSize:18,cursor:"pointer"}}>✕</button></div>
-          {sidebarJSX}
+          {mkSidebar()}
         </div>
         <div style={{flex:1,background:"#0008"}} onClick={()=>setMobileSidebarOpen(false)}/>
       </div>}
@@ -953,7 +954,7 @@ export default function App(){
       <div style={{display:"flex",flex:1,overflow:"hidden"}}>
         {/* Desktop sidebar */}
         <div style={{width:215,minWidth:215,borderRight:`1px solid ${th.border3}`,overflowY:"auto",background:th.sidebar}} className="desktop-sidebar">
-          {sidebarJSX}
+          {mkSidebar()}
         </div>
 
         {/* Main */}
