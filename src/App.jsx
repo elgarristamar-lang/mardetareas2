@@ -355,55 +355,90 @@ function TeamMeetingRow({meeting,color,th,catName,onUpdate,onSetCollaborator,onD
 }
 
 // ── Weekly Calendar View ──────────────────────────────────────
-function CalendarView({th,dark}){
+function CalendarView({th,dark,calData,onCalDataUpdate}){
   const todayStr=today();
   const [weekStart,setWeekStart]=useState(getWeekStart(todayStr));
   const [selectedMember,setSelectedMember]=useState(null);
+  const data=calData||CAL_DATA;
 
   const weekDates=Array.from({length:5},(_,i)=>addDays(weekStart,i));
   const weekData=weekDates.map(date=>{
-    const row=CAL_DATA.find(r=>r.date===date);
+    const row=data.find(r=>r.date===date);
     return{date,row:row||null};
   });
 
   const goWeek=(n)=>setWeekStart(addDays(weekStart,n*7));
   const goToday=()=>setWeekStart(getWeekStart(todayStr));
 
-  const semana=CAL_DATA.find(r=>r.date===weekStart||weekDates.includes(r.date));
+  const semana=data.find(r=>weekDates.includes(r.date));
   const semanaLabel=semana?.semana||"";
 
-  // Presencial count for week
-  const weekPresencial=weekData.reduce((acc,{row})=>{
-    if(!row)return acc;
-    CAL_MEMBERS.forEach(m=>{const s=getStatus(row[m]);if(s===CAL_STATUS.P||s===CAL_STATUS.PD)acc++;});
-    return acc;
-  },0);
+  // Handle Excel upload
+  const handleExcelUpload=(e)=>{
+    const file=e.target.files[0];if(!file)return;
+    const reader=new FileReader();
+    reader.onload=async(ev)=>{
+      try{
+        const {read,utils}=await import("https://cdn.sheetjs.com/xlsx-0.20.3/package/xlsx.mjs");
+        const wb=read(new Uint8Array(ev.target.result),{type:"array"});
+        const ws=wb.Sheets["Datos 2026"]||wb.Sheets[wb.SheetNames[0]];
+        const rows=utils.sheet_to_json(ws,{header:1,defval:""});
+        const MES_MAP={ENERO:1,FEBRERO:2,MARZO:3,ABRIL:4,MAYO:5,JUNIO:6,JULIO:7,AGOSTO:8,SEPTIEMBRE:9,OCTUBRE:10,NOVIEMBRE:11,DICIEMBRE:12};
+        const WDAYS=["LUNES","MARTES","MIÉRCOLES","JUEVES","VIERNES"];
+        const MEMBERS_COL=["IVAN","MAR","SHANE","PABLO","PAU"];
+        let currentSemana="";
+        const parsed=[];
+        rows.slice(1).forEach(row=>{
+          const semana=row[0],dia=String(row[1]||"").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,""),mes=String(row[2]||"").toUpperCase(),num=row[3];
+          if(semana)currentSemana=semana;
+          const diaClean=dia.normalize("NFC");
+          if(!WDAYS.includes(diaClean)&&!["LUNES","MARTES","MIERCOLES","JUEVES","VIERNES"].includes(dia.replace(/[ÁÉÍÓÚÜ]/g,c=>"AEIOU"["ÁÉÍÓÚ".indexOf(c)]||c)))return;
+          const month=MES_MAP[mes];if(!month||!num)return;
+          try{
+            const d=new Date(2026,month-1,parseInt(num));
+            const iso=d.toISOString().split("T")[0];
+            const entry={date:iso,semana:currentSemana,dia:row[1],mes};
+            MEMBERS_COL.forEach((m,i)=>{entry[m]=String(row[4+i]||"").trim().toUpperCase();});
+            parsed.push(entry);
+          }catch{}
+        });
+        if(parsed.length>0){onCalDataUpdate(parsed);alert(`✅ Calendario actualizado: ${parsed.length} días laborables cargados.`);}
+        else{alert("No se encontraron datos. ¿Es el formato correcto?");}
+      }catch(err){alert("Error al leer el Excel: "+err.message);}
+    };
+    reader.readAsArrayBuffer(file);
+    e.target.value="";
+  };
 
   return(<div>
     {/* Header */}
     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,flexWrap:"wrap",gap:10}}>
       <div>
-        <h2 style={{margin:0,color:th.text,fontSize:18,fontWeight:800}}>📅 Calendario del equipo</h2>
+        <h2 style={{margin:0,color:th.text,fontSize:18,fontWeight:800}}>👥 Calendario del equipo</h2>
         <span style={{color:th.text5,fontSize:11}}>{semanaLabel} · {fmtShort(weekStart)} – {fmtShort(addDays(weekStart,4))}</span>
       </div>
       <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
-        {/* Member filter */}
-        <div style={{display:"flex",gap:4}}>
+        <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
           <button onClick={()=>setSelectedMember(null)} style={{padding:"4px 10px",borderRadius:99,fontSize:11,cursor:"pointer",border:`1.5px solid ${!selectedMember?"#4ECDC4":th.border}`,background:!selectedMember?dark?"#0F2422":"#E8FAFA":"transparent",color:!selectedMember?"#4ECDC4":th.text5,fontWeight:!selectedMember?700:400}}>Todos</button>
           {CAL_MEMBERS.map(m=>(<button key={m} onClick={()=>setSelectedMember(selectedMember===m?null:m)} style={{padding:"4px 10px",borderRadius:99,fontSize:11,cursor:"pointer",border:`1.5px solid ${selectedMember===m?"#74B9FF":th.border}`,background:selectedMember===m?dark?"#0D1E35":"#EBF4FF":"transparent",color:selectedMember===m?"#74B9FF":th.text5,fontWeight:selectedMember===m?700:400}}>{m[0]+m.slice(1).toLowerCase()}</button>))}
         </div>
         <button onClick={()=>goWeek(-1)} style={{padding:"6px 10px",borderRadius:8,border:`1px solid ${th.border}`,background:th.surface,color:th.text3,cursor:"pointer",fontSize:13}}>‹</button>
         <button onClick={goToday} style={{padding:"6px 10px",borderRadius:8,border:`1px solid ${th.border}`,background:th.surface,color:th.text3,cursor:"pointer",fontSize:11}}>Hoy</button>
         <button onClick={()=>goWeek(1)} style={{padding:"6px 10px",borderRadius:8,border:`1px solid ${th.border}`,background:th.surface,color:th.text3,cursor:"pointer",fontSize:13}}>›</button>
+        <label title="Actualizar calendario desde Excel" style={{padding:"6px 11px",borderRadius:8,border:`1px solid ${th.border}`,background:dark?"#0D1E35":"#EBF4FF",color:"#74B9FF",cursor:"pointer",fontSize:11,fontWeight:700,whiteSpace:"nowrap"}}>
+          📊 Actualizar Excel
+          <input type="file" accept=".xlsx,.xls" style={{display:"none"}} onChange={handleExcelUpload}/>
+        </label>
       </div>
     </div>
 
     {/* Legend */}
     <div style={{display:"flex",gap:12,flexWrap:"wrap",marginBottom:14}}>
       {Object.entries(CAL_STATUS).filter(([k])=>k!=="OTHER").map(([k,v])=>(<span key={k} style={{display:"flex",alignItems:"center",gap:4,fontSize:11,color:th.text4}}><span style={{width:10,height:10,borderRadius:3,background:v.color,display:"inline-block"}}/>{v.icon} {v.label}</span>))}
+      <span style={{display:"flex",alignItems:"center",gap:4,fontSize:11,color:"#FF6B6B"}}>⚠️ Menos de 2 presencial</span>
     </div>
 
-    {/* Desktop grid */}
+    {/* Grid */}
     <div style={{overflowX:"auto"}}>
       <div style={{minWidth:500}}>
         {/* Day headers */}
@@ -431,27 +466,31 @@ function CalendarView({th,dark}){
               const st=getStatus(val);
               const isEmpty=!val||val==="";
               const isFestivo=val==="F";
-              return(<div key={date} style={{padding:"6px 8px",borderRadius:8,background:isEmpty||isFestivo?th.border3:dark?st.bg:st.bgL,border:`1px solid ${isEmpty||isFestivo?th.border2:st.color+"44"}`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:48,gap:2}}>
-                {isFestivo?(<span style={{fontSize:12}}>🎉</span>):isEmpty?(<span style={{fontSize:10,color:th.text6}}>—</span>):(<>
-                  <span style={{fontSize:14}}>{st.icon}</span>
+              return(<div key={date} style={{padding:"6px 8px",borderRadius:8,background:isEmpty||isFestivo?th.border3:dark?st.bg:st.bgL,border:`1px solid ${isEmpty||isFestivo?th.border2:st.color+"44"}`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:52,gap:2}}>
+                {isFestivo?(<span style={{fontSize:14}}>🎉</span>):isEmpty?(<span style={{fontSize:10,color:th.text6}}>—</span>):(<>
+                  <span style={{fontSize:16}}>{st.icon}</span>
                   <span style={{fontSize:9,fontWeight:700,color:st.color,textAlign:"center",lineHeight:1.2}}>{val.length>6?val.slice(0,6)+"…":val}</span>
                 </>)}
               </div>);
             })}
           </div>
         ))}
-        {/* Summary row */}
+        {/* Summary OFICINA row */}
         <div style={{display:"grid",gridTemplateColumns:`120px repeat(5,1fr)`,gap:4,marginTop:6}}>
-          <div style={{padding:"6px 8px",display:"flex",alignItems:"center"}}><span style={{fontSize:10,color:th.text5,fontWeight:700}}>OFICINA</span></div>
+          <div style={{padding:"6px 8px",display:"flex",alignItems:"center"}}><span style={{fontSize:10,color:"#111",fontWeight:700}}>OFICINA</span></div>
           {weekData.map(({date,row})=>{
-            if(!row)return<div key={date}/>;
-            const presCount=(selectedMember?[selectedMember]:CAL_MEMBERS).filter(m=>{const s=getStatus(row[m]);return s===CAL_STATUS.P||s===CAL_STATUS.PD;}).length;
-            const ttCount=(selectedMember?[selectedMember]:CAL_MEMBERS).filter(m=>getStatus(row[m])===CAL_STATUS.TT).length;
-            const vacCount=(selectedMember?[selectedMember]:CAL_MEMBERS).filter(m=>getStatus(row[m])===CAL_STATUS.V).length;
-            return(<div key={date} style={{padding:"4px 6px",borderRadius:8,background:th.border3,border:`1px solid ${th.border2}`,display:"flex",flexDirection:"column",gap:2}}>
-              {presCount>0&&<span style={{fontSize:10,color:"#6BCB77"}}>🏢 {presCount}</span>}
-              {ttCount>0&&<span style={{fontSize:10,color:"#74B9FF"}}>🏠 {ttCount}</span>}
-              {vacCount>0&&<span style={{fontSize:10,color:"#FFD93D"}}>🌴 {vacCount}</span>}
+            const activeMembers=selectedMember?[selectedMember]:CAL_MEMBERS;
+            const allF=activeMembers.every(m=>row?.[m]==="F");
+            if(!row||allF)return<div key={date} style={{padding:"4px 6px",borderRadius:8,background:th.border3,border:`1px solid ${th.border2}`}}/>;
+            const presCount=activeMembers.filter(m=>{const s=getStatus(row[m]);return s===CAL_STATUS.P||s===CAL_STATUS.PD;}).length;
+            const ttCount=activeMembers.filter(m=>getStatus(row[m])===CAL_STATUS.TT).length;
+            const vacCount=activeMembers.filter(m=>getStatus(row[m])===CAL_STATUS.V).length;
+            const lowPresencial=!selectedMember&&presCount<2&&!allF;
+            return(<div key={date} style={{padding:"5px 8px",borderRadius:8,background:lowPresencial?dark?"#2A0808":"#FFF0F0":th.border3,border:`1.5px solid ${lowPresencial?"#FF6B6B":th.border2}`,display:"flex",flexDirection:"column",gap:3}}>
+              {presCount>0&&<span style={{fontSize:11,fontWeight:700,color:"#111"}}>🏢 {presCount}</span>}
+              {ttCount>0&&<span style={{fontSize:11,fontWeight:700,color:"#111"}}>🏠 {ttCount}</span>}
+              {vacCount>0&&<span style={{fontSize:11,fontWeight:700,color:"#111"}}>🌴 {vacCount}</span>}
+              {lowPresencial&&<span style={{fontSize:9,color:"#FF6B6B",fontWeight:800}}>⚠️ Bajo</span>}
             </div>);
           })}
         </div>
@@ -514,6 +553,105 @@ function UpcomingGroup({title,tasks,icon,color,th,dark,defaultOpen=false,onNavig
 }
 
 // ── Personal category: show only pending tasks ────────────────
+// ── Tasks Calendar View ───────────────────────────────────────
+function TasksCalendarView({cats,th,dark,onNavigate}){
+  const todayStr=today();
+  const [weekStart,setWeekStart]=useState(getWeekStart(todayStr));
+
+  const weekDates=Array.from({length:5},(_,i)=>addDays(weekStart,i));
+  const goWeek=(n)=>setWeekStart(addDays(weekStart,n*7));
+  const goToday=()=>setWeekStart(getWeekStart(todayStr));
+
+  // Collect all pending tasks with deadlines, group by date
+  const tasksByDate={};
+  cats.filter(c=>c.type!=="personal").forEach(cat=>{
+    const color=gc(COLORS[cat.colorIdx],dark);
+    cat.tasks.filter(t=>!t.done&&t.deadline).forEach(t=>{
+      if(!tasksByDate[t.deadline])tasksByDate[t.deadline]=[];
+      tasksByDate[t.deadline].push({...t,catName:cat.name,catIcon:cat.icon,catId:cat.id,catColor:color});
+    });
+  });
+
+  // Also collect meeting dates
+  cats.filter(c=>c.type==="meeting"||c.type==="meeting121eq").forEach(cat=>{
+    const color=gc(COLORS[cat.colorIdx],dark);
+    cat.tasks.filter(m=>!m.done&&m.date).forEach(m=>{
+      if(!tasksByDate[m.date])tasksByDate[m.date]=[];
+      tasksByDate[m.date].push({id:m.id,text:m.collaborator||m.meetingId,catName:cat.name,catIcon:cat.icon,catId:cat.id,catColor:color,isMeeting:true,priority:"media"});
+    });
+  });
+
+  const semana=Object.keys(tasksByDate).length>0?"":"";
+  // Find semana label from CAL_DATA
+  const calRow=CAL_DATA.find(r=>r.date===weekStart||weekDates.includes(r.date));
+  const semanaLabel=calRow?.semana||`Semana del ${fmtShort(weekStart)}`;
+
+  // Count tasks outside this week
+  const allPending=cats.filter(c=>c.type!=="personal").flatMap(c=>c.tasks.filter(t=>!t.done&&t.deadline));
+  const overdueTasks=allPending.filter(t=>t.deadline<weekDates[0]);
+  const futureTasks=allPending.filter(t=>t.deadline>weekDates[4]);
+
+  return(<div>
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,flexWrap:"wrap",gap:10}}>
+      <div>
+        <h2 style={{margin:0,color:th.text,fontSize:18,fontWeight:800}}>📌 Calendario de tareas</h2>
+        <span style={{color:th.text5,fontSize:11}}>{semanaLabel} · {fmtShort(weekStart)} – {fmtShort(addDays(weekStart,4))}</span>
+      </div>
+      <div style={{display:"flex",gap:6,alignItems:"center"}}>
+        <button onClick={()=>goWeek(-1)} style={{padding:"6px 10px",borderRadius:8,border:`1px solid ${th.border}`,background:th.surface,color:th.text3,cursor:"pointer",fontSize:13}}>‹</button>
+        <button onClick={goToday} style={{padding:"6px 10px",borderRadius:8,border:`1px solid ${th.border}`,background:th.surface,color:th.text3,cursor:"pointer",fontSize:11}}>Hoy</button>
+        <button onClick={()=>goWeek(1)} style={{padding:"6px 10px",borderRadius:8,border:`1px solid ${th.border}`,background:th.surface,color:th.text3,cursor:"pointer",fontSize:13}}>›</button>
+      </div>
+    </div>
+
+    {/* Overdue banner */}
+    {overdueTasks.length>0&&(<div style={{padding:"8px 12px",borderRadius:9,background:dark?"#2A0808":"#FFF0F0",border:"1px solid #FF6B6B44",marginBottom:12,display:"flex",alignItems:"center",gap:8}}>
+      <span style={{fontSize:13}}>⚠️</span>
+      <span style={{fontSize:12,color:"#FF6B6B",fontWeight:700}}>{overdueTasks.length} tarea{overdueTasks.length!==1?"s":""} vencida{overdueTasks.length!==1?"s":""}</span>
+      <span style={{fontSize:11,color:th.text5}}>— anteriores a esta semana</span>
+    </div>)}
+
+    {/* Week columns */}
+    <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:8}}>
+      {weekDates.map(date=>{
+        const isToday=date===todayStr;
+        const d=new Date(date+"T00:00:00");
+        const dayName=WEEK_DAYS_ES[d.getDay()-1]||"";
+        const dayTasks=tasksByDate[date]||[];
+        const dl=dlStatus(date);
+        return(<div key={date} style={{borderRadius:11,background:isToday?dark?"#0D1E35":"#EBF4FF":th.surface2,border:`1.5px solid ${isToday?"#74B9FF55":th.border2}`,overflow:"hidden"}}>
+          {/* Day header */}
+          <div style={{padding:"8px 10px",borderBottom:`1px solid ${th.border2}`,textAlign:"center",background:isToday?dark?"#0D1E35":"#D8ECFF":"transparent"}}>
+            <div style={{fontSize:11,fontWeight:600,color:isToday?"#74B9FF":th.text3}}>{dayName}</div>
+            <div style={{fontSize:18,fontWeight:800,color:isToday?"#74B9FF":th.text}}>{d.getDate()}</div>
+            {dayTasks.length>0&&<div style={{fontSize:10,fontWeight:700,color:th.text5}}>{dayTasks.length} elemento{dayTasks.length!==1?"s":""}</div>}
+          </div>
+          {/* Tasks */}
+          <div style={{padding:"6px",minHeight:80}}>
+            {dayTasks.length===0?(<div style={{textAlign:"center",paddingTop:20,color:th.text6,fontSize:11}}>—</div>):(
+              dayTasks.map(t=>(<div key={t.id} onClick={()=>onNavigate(t.catId)} style={{marginBottom:5,padding:"5px 8px",borderRadius:7,background:t.catColor.light,border:`1px solid ${t.catColor.accent}33`,cursor:"pointer",transition:"opacity 0.15s"}}
+                onMouseEnter={e=>e.currentTarget.style.opacity="0.8"} onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
+                <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:2}}>
+                  <span style={{fontSize:11}}>{t.catIcon}</span>
+                  <span style={{fontSize:10,color:t.catColor.tc,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.catName}</span>
+                  {t.isMeeting&&<span style={{fontSize:9,color:t.catColor.tc,background:t.catColor.accent+"33",padding:"0 4px",borderRadius:3,flexShrink:0}}>reunión</span>}
+                </div>
+                <div style={{fontSize:11.5,color:th.text2,lineHeight:1.3,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{t.text}</div>
+                {!t.isMeeting&&t.priority&&<span style={{fontSize:9,color:PRIORITY[t.priority]?.dot}}>{PRIORITY[t.priority]?.dot}</span>}
+              </div>))
+            )}
+          </div>
+        </div>);
+      })}
+    </div>
+
+    {/* Future tasks summary */}
+    {futureTasks.length>0&&(<div style={{marginTop:14,padding:"8px 12px",borderRadius:9,background:th.surface2,border:`1px solid ${th.border2}`}}>
+      <span style={{fontSize:11,color:th.text5}}>📅 <strong style={{color:th.text4}}>{futureTasks.length}</strong> tarea{futureTasks.length!==1?"s":""} con deadline en semanas posteriores</span>
+    </div>)}
+  </div>);
+}
+
 function PersonalView({cat,th,dark,onToggle,onDelete,onUpdate,onAddTask}){
   const color=gc(COLORS[cat.colorIdx],dark);
   const [nText,setNText]=useState("");const [nDl,setNDl]=useState("");const [nPri,setNPri]=useState("media");
@@ -557,6 +695,8 @@ export default function App(){
   const setDarkP=(fn)=>setDark(prev=>{const next=typeof fn==="function"?fn(prev):fn;try{localStorage.setItem("mdt_dark",String(next));}catch{}return next;});
 
   const [tab,setTab]=useState("overview");
+  const [calData,setCalData]=useState(()=>{try{const v=localStorage.getItem("mdt_caldata");return v?JSON.parse(v):null;}catch{return null;}});
+  const updateCalData=(data)=>{setCalData(data);try{localStorage.setItem("mdt_caldata",JSON.stringify(data));}catch{}};
   const [mobileSidebarOpen,setMobileSidebarOpen]=useState(false);
   const [ncName,setNcName]=useState("");const [ncIcon,setNcIcon]=useState("📊");const [ncColor,setNcColor]=useState(0);const [showNc,setShowNc]=useState(false);
   const [editCatId,setEditCatId]=useState(null);const [editCatName,setEditCatName]=useState("");
@@ -644,7 +784,8 @@ export default function App(){
   const SidebarContent=()=>(<div style={{padding:"13px 10px 10px"}}>
     <p style={{margin:"0 0 7px 6px",color:th.text6,fontSize:10,fontWeight:700,letterSpacing:2,textTransform:"uppercase"}}>Navegación</p>
     <SI id="overview" label="Vista General" icon="◫" badge={0}/>
-    <SI id="calendar" label="Calendario" icon="📅" badge={0}/>
+    <SI id="cal-equipo" label="Calendario equipo" icon="👥" badge={0}/>
+    <SI id="cal-tareas" label="Calendario tareas" icon="📌" badge={0}/>
     <SI id="history" label={`Historial (${totalDone})`} icon="✓" badge={0}/>
     <div style={{height:1,background:th.border3,margin:"9px 4px"}}/>
     <p style={{margin:"0 0 7px 6px",color:th.text6,fontSize:10,fontWeight:700,letterSpacing:2,textTransform:"uppercase"}}>Categorías</p>
@@ -709,7 +850,7 @@ export default function App(){
             const allUpcoming=allTasks.filter(t=>!t.done&&t.deadline).sort((a,b)=>a.deadline.localeCompare(b.deadline));
             const managerUp=managerCat?managerCat.tasks.filter(t=>!t.done).sort((a,b)=>(a.date||"").localeCompare(b.date||"")).slice(0,5):[];
             const equipoUp=equipoCat?equipoCat.tasks.filter(t=>!t.done).sort((a,b)=>(a.date||"").localeCompare(b.date||"")).slice(0,5):[];
-            const otherUp=allUpcoming.filter(t=>{const cat=cats.find(c=>c.id===t.catId);return cat&&(cat.type==="tasks"||cat.type==="personal");}).slice(0,8);
+            const otherUp=allUpcoming.filter(t=>{const cat=cats.find(c=>c.id===t.catId);return cat&&cat.type==="tasks";}).slice(0,8);
             return(<div>
               <h2 style={{margin:"0 0 16px",color:th.text,fontSize:17,fontWeight:800}}>Vista General</h2>
               <Dashboard cats={cats} th={th} dark={dark} onNavigate={navigateTo}/>
@@ -735,8 +876,11 @@ export default function App(){
             </div>);
           })()}
 
-          {/* CALENDAR */}
-          {tab==="calendar"&&<CalendarView th={th} dark={dark}/>}
+          {/* CALENDAR EQUIPO */}
+          {tab==="cal-equipo"&&<CalendarView th={th} dark={dark} calData={calData} onCalDataUpdate={updateCalData}/>}
+
+          {/* CALENDAR TAREAS */}
+          {tab==="cal-tareas"&&<TasksCalendarView cats={cats} th={th} dark={dark} onNavigate={navigateTo}/>}
 
           {/* PERSONAL */}
           {selCat&&selCat.type==="personal"&&(
