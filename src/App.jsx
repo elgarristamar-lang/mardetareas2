@@ -764,6 +764,7 @@ function PersonalView({cat,th,dark,calData,onToggle,onDelete,onUpdate,onAddTask}
 // ── Main App ───────────────────────────────────────────────────
 export default function App(){
   const [dark,setDark]=useState(()=>{try{const v=localStorage.getItem("mdt_dark");return v===null?true:v==="true";}catch{return true;}});
+  useEffect(()=>{document.title="🌊 mardetareas";},[]);
   const [cats,setCats]=useState(()=>{
     try{
       const v=localStorage.getItem("mdt_cats");
@@ -933,7 +934,7 @@ export default function App(){
           {/* Mobile hamburger */}
           <button onClick={()=>setMobileSidebarOpen(o=>!o)} style={{display:"none",padding:"6px 8px",borderRadius:8,border:`1px solid ${th.border}`,background:th.surface,color:th.text3,fontSize:16,cursor:"pointer",lineHeight:1}} className="mobile-menu-btn">☰</button>
           <div>
-            <h1 style={{margin:0,fontSize:18,fontWeight:800,color:th.text,letterSpacing:-0.5}}>📋 MarDeTareas</h1>
+            <h1 style={{margin:0,fontSize:18,fontWeight:800,color:th.text,letterSpacing:-0.5}}>🌊 mardetareas</h1>
             <p style={{margin:0,color:th.text5,fontSize:10}}>{totalAll-totalDone} pendientes · {totalDone} completadas</p>
           </div>
         </div>
