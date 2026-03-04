@@ -543,7 +543,7 @@ function Dashboard({cats,th,dark,onNavigate}){
         <div key={c.id} onClick={()=>onNavigate(c.id)} style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,cursor:"pointer"}}>
           <span style={{fontSize:14,flexShrink:0}}>{c.icon}</span>
           <div style={{width:85,fontSize:11,color:th.text3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",flexShrink:0}}>{c.name}</div>
-          <div style={{flex:1,height:8,background:th.border2,borderRadius:99,overflow:"hidden",minWidth:0}}><div style={{height:8,borderRadius:99,background:color.accent,width:`${c.pct}%`,maxWidth:"100%",transition:"width 0.5s"}}/></div>
+          <div style={{flex:1,height:8,background:th.border2,borderRadius:99,overflow:"hidden",minWidth:0}}><div style={{height:8,borderRadius:99,background:color.accent,width:`${maxTotal>0?Math.round((c.done/maxTotal)*100):0}%`,transition:"width 0.5s"}}/></div>
           <span style={{fontSize:11,color:color.tc,minWidth:36,textAlign:"right",flexShrink:0}}>{c.done}/{c.total}</span>
         </div>
       );})}
