@@ -558,7 +558,7 @@ function UpcomingGroup({title,tasks,icon,color,th,dark,defaultOpen=false,onNavig
 
 // ── Personal category: show only pending tasks ────────────────
 // ── Tasks Calendar View ───────────────────────────────────────
-function TasksCalendarView({cats,th,dark,onNavigate}){
+function TasksCalendarView({cats,th,dark,onNavigate,personalOnly=false}){
   const todayStr=today();
   const [weekStart,setWeekStart]=useState(getWeekStart(todayStr));
 
@@ -566,9 +566,13 @@ function TasksCalendarView({cats,th,dark,onNavigate}){
   const goWeek=(n)=>setWeekStart(addDays(weekStart,n*7));
   const goToday=()=>setWeekStart(getWeekStart(todayStr));
 
-  // Collect all pending tasks with deadlines, group by date
+  // Collect tasks by date based on filter
   const tasksByDate={};
-  cats.filter(c=>c.type!=="personal").forEach(cat=>{
+  const sourceCats=personalOnly
+    ?cats.filter(c=>c.type==="personal")
+    :cats.filter(c=>c.type!=="personal");
+
+  sourceCats.forEach(cat=>{
     const color=gc(COLORS[cat.colorIdx],dark);
     cat.tasks.filter(t=>!t.done&&t.deadline).forEach(t=>{
       if(!tasksByDate[t.deadline])tasksByDate[t.deadline]=[];
@@ -576,29 +580,31 @@ function TasksCalendarView({cats,th,dark,onNavigate}){
     });
   });
 
-  // Also collect meeting dates
-  cats.filter(c=>c.type==="meeting"||c.type==="meeting121eq").forEach(cat=>{
-    const color=gc(COLORS[cat.colorIdx],dark);
-    cat.tasks.filter(m=>!m.done&&m.date).forEach(m=>{
-      if(!tasksByDate[m.date])tasksByDate[m.date]=[];
-      tasksByDate[m.date].push({id:m.id,text:m.collaborator||m.meetingId,catName:cat.name,catIcon:cat.icon,catId:cat.id,catColor:color,isMeeting:true,priority:"media"});
+  // Also collect meeting dates (only for non-personal view)
+  if(!personalOnly){
+    cats.filter(c=>c.type==="meeting"||c.type==="meeting121eq").forEach(cat=>{
+      const color=gc(COLORS[cat.colorIdx],dark);
+      cat.tasks.filter(m=>!m.done&&m.date).forEach(m=>{
+        if(!tasksByDate[m.date])tasksByDate[m.date]=[];
+        tasksByDate[m.date].push({id:m.id,text:m.collaborator||m.meetingId,catName:cat.name,catIcon:cat.icon,catId:cat.id,catColor:color,isMeeting:true,priority:"media"});
+      });
     });
-  });
+  }
 
-  const semana=Object.keys(tasksByDate).length>0?"":"";
-  // Find semana label from CAL_DATA
-  const calRow=CAL_DATA.find(r=>r.date===weekStart||weekDates.includes(r.date));
+  const calRow=CAL_DATA.find(r=>weekDates.includes(r.date));
   const semanaLabel=calRow?.semana||`Semana del ${fmtShort(weekStart)}`;
 
-  // Count tasks outside this week
-  const allPending=cats.filter(c=>c.type!=="personal").flatMap(c=>c.tasks.filter(t=>!t.done&&t.deadline));
+  const allPending=sourceCats.flatMap(c=>c.tasks.filter(t=>!t.done&&t.deadline));
   const overdueTasks=allPending.filter(t=>t.deadline<weekDates[0]);
   const futureTasks=allPending.filter(t=>t.deadline>weekDates[4]);
+
+  const accentColor=personalOnly?"#55EFC4":"#FF6B6B";
+  const title=personalOnly?"🌿 Calendario personal":"📌 Calendario de tareas";
 
   return(<div>
     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,flexWrap:"wrap",gap:10}}>
       <div>
-        <h2 style={{margin:0,color:th.text,fontSize:18,fontWeight:800}}>📌 Calendario de tareas</h2>
+        <h2 style={{margin:0,color:th.text,fontSize:18,fontWeight:800}}>{title}</h2>
         <span style={{color:th.text5,fontSize:11}}>{semanaLabel} · {fmtShort(weekStart)} – {fmtShort(addDays(weekStart,4))}</span>
       </div>
       <div style={{display:"flex",gap:6,alignItems:"center"}}>
@@ -608,29 +614,24 @@ function TasksCalendarView({cats,th,dark,onNavigate}){
       </div>
     </div>
 
-    {/* Overdue banner */}
     {overdueTasks.length>0&&(<div style={{padding:"8px 12px",borderRadius:9,background:dark?"#2A0808":"#FFF0F0",border:"1px solid #FF6B6B44",marginBottom:12,display:"flex",alignItems:"center",gap:8}}>
       <span style={{fontSize:13}}>⚠️</span>
       <span style={{fontSize:12,color:"#FF6B6B",fontWeight:700}}>{overdueTasks.length} tarea{overdueTasks.length!==1?"s":""} vencida{overdueTasks.length!==1?"s":""}</span>
       <span style={{fontSize:11,color:th.text5}}>— anteriores a esta semana</span>
     </div>)}
 
-    {/* Week columns */}
     <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:8}}>
       {weekDates.map(date=>{
         const isToday=date===todayStr;
-        const d=new Date(date+"T00:00:00");
+        const d=new Date(date+"T12:00:00");
         const dayName=WEEK_DAYS_ES[d.getDay()-1]||"";
         const dayTasks=tasksByDate[date]||[];
-        const dl=dlStatus(date);
         return(<div key={date} style={{borderRadius:11,background:isToday?dark?"#0D1E35":"#EBF4FF":th.surface2,border:`1.5px solid ${isToday?"#74B9FF55":th.border2}`,overflow:"hidden"}}>
-          {/* Day header */}
           <div style={{padding:"8px 10px",borderBottom:`1px solid ${th.border2}`,textAlign:"center",background:isToday?dark?"#0D1E35":"#D8ECFF":"transparent"}}>
             <div style={{fontSize:11,fontWeight:600,color:isToday?"#74B9FF":th.text3}}>{dayName}</div>
             <div style={{fontSize:18,fontWeight:800,color:isToday?"#74B9FF":th.text}}>{d.getDate()}</div>
             {dayTasks.length>0&&<div style={{fontSize:10,fontWeight:700,color:th.text5}}>{dayTasks.length} elemento{dayTasks.length!==1?"s":""}</div>}
           </div>
-          {/* Tasks */}
           <div style={{padding:"6px",minHeight:80}}>
             {dayTasks.length===0?(<div style={{textAlign:"center",paddingTop:20,color:th.text6,fontSize:11}}>—</div>):(
               dayTasks.map(t=>(<div key={t.id} onClick={()=>onNavigate(t.catId)} style={{marginBottom:5,padding:"5px 8px",borderRadius:7,background:t.catColor.light,border:`1px solid ${t.catColor.accent}33`,cursor:"pointer",transition:"opacity 0.15s"}}
@@ -641,7 +642,7 @@ function TasksCalendarView({cats,th,dark,onNavigate}){
                   {t.isMeeting&&<span style={{fontSize:9,color:t.catColor.tc,background:t.catColor.accent+"33",padding:"0 4px",borderRadius:3,flexShrink:0}}>reunión</span>}
                 </div>
                 <div style={{fontSize:11.5,color:th.text2,lineHeight:1.3,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{t.text}</div>
-                {!t.isMeeting&&t.priority&&<span style={{fontSize:9,color:PRIORITY[t.priority]?.dot}}>{PRIORITY[t.priority]?.dot}</span>}
+                {!t.isMeeting&&t.priority&&<span style={{fontSize:9}}>{PRIORITY[t.priority]?.dot}</span>}
               </div>))
             )}
           </div>
@@ -649,7 +650,6 @@ function TasksCalendarView({cats,th,dark,onNavigate}){
       })}
     </div>
 
-    {/* Future tasks summary */}
     {futureTasks.length>0&&(<div style={{marginTop:14,padding:"8px 12px",borderRadius:9,background:th.surface2,border:`1px solid ${th.border2}`}}>
       <span style={{fontSize:11,color:th.text5}}>📅 <strong style={{color:th.text4}}>{futureTasks.length}</strong> tarea{futureTasks.length!==1?"s":""} con deadline en semanas posteriores</span>
     </div>)}
@@ -901,6 +901,7 @@ export default function App(){
     <SI id="overview" label="Vista General" icon="◫" badge={0}/>
     <SI id="cal-equipo" label="Calendario equipo" icon="👥" badge={0}/>
     <SI id="cal-tareas" label="Calendario tareas" icon="📌" badge={0}/>
+    <SI id="cal-personal" label="Calendario personal" icon="🌿" badge={0}/>
     <SI id="history" label={`Historial (${totalDone})`} icon="✓" badge={0}/>
     <div style={{height:1,background:th.border3,margin:"9px 4px"}}/>
     <p style={{margin:"0 0 7px 6px",color:th.text6,fontSize:10,fontWeight:700,letterSpacing:2,textTransform:"uppercase"}}>Categorías</p>
@@ -996,6 +997,9 @@ export default function App(){
 
           {/* CALENDAR TAREAS */}
           {tab==="cal-tareas"&&<TasksCalendarView cats={cats} th={th} dark={dark} onNavigate={navigateTo}/>}
+
+          {/* CALENDAR PERSONAL */}
+          {tab==="cal-personal"&&<TasksCalendarView cats={cats} th={th} dark={dark} onNavigate={navigateTo} personalOnly={true}/>}
 
           {/* PERSONAL */}
           {selCat&&selCat.type==="personal"&&(
