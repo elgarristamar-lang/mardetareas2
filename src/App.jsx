@@ -483,12 +483,11 @@ function CalendarView({th,dark,calData,onCalDataUpdate}){
             const activeMembers=selectedMember?[selectedMember]:CAL_MEMBERS;
             const allF=activeMembers.every(m=>row?.[m]==="F");
             if(!row||allF)return<div key={date} style={{padding:"4px 6px",borderRadius:8,background:th.border3,border:`1px solid ${th.border2}`}}/>;
-            const presCount=activeMembers.filter(m=>{const s=getStatus(row[m]);return s===CAL_STATUS.P||s===CAL_STATUS.PD;}).length;
+            const presCount=activeMembers.filter(m=>{const s=getStatus(row[m]);return s===CAL_STATUS.P||s===CAL_STATUS.PD||s===CAL_STATUS.PARTIDO;}).length;
             const ttCount=activeMembers.filter(m=>getStatus(row[m])===CAL_STATUS.TT).length;
             const vacCount=activeMembers.filter(m=>getStatus(row[m])===CAL_STATUS.V).length;
             const festCount=activeMembers.filter(m=>row[m]==="F").length;
-            // "available" = total minus TT, vacaciones, festivos — should be >= 2 presencial
-            const available=activeMembers.length-ttCount-vacCount-festCount;
+            // Flag if 0 or 1 presencial and not everyone is on festivo
             const lowPresencial=!selectedMember&&!allF&&presCount<2;
             return(<div key={date} style={{padding:"5px 8px",borderRadius:8,background:lowPresencial?dark?"#2A0808":"#FFF0F0":th.border3,border:`1.5px solid ${lowPresencial?"#FF6B6B":th.border2}`,display:"flex",flexDirection:"column",gap:3}}>
               {presCount>0&&<span style={{fontSize:11,fontWeight:700,color:"#111"}}>🏢 {presCount}</span>}
@@ -742,8 +741,7 @@ function PersonalView({cat,th,dark,calData,onToggle,onDelete,onUpdate,onAddTask}
                 ?<div style={{textAlign:"center",paddingTop:10,color:th.text6,fontSize:10}}>—</div>
                 :dayTasks.map(t=>{const p=PRIORITY[t.priority];return(
                   <div key={t.id} style={{marginBottom:4,padding:"4px 6px",borderRadius:6,background:color.light,border:`1px solid ${color.accent}33`}}>
-                    <div style={{fontSize:11,color:th.text2,lineHeight:1.3,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{t.text}</div>
-                    <span style={{fontSize:9}}>{p?.dot}</span>
+                    <div style={{display:"flex",alignItems:"center",gap:4,marginBottom:2}}><span style={{fontSize:9}}>{p?.dot}</span><div style={{fontSize:11,color:th.text2,lineHeight:1.3,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{t.text}</div></div>
                   </div>
                 );})}
             </div>
@@ -785,6 +783,25 @@ export default function App(){
   });
   const th=dark?DARK:LIGHT;
 
+  const [dragCatId,setDragCatId]=useState(null);
+  const [dragOverId,setDragOverId]=useState(null);
+  const handleCatDragStart=(id)=>setDragCatId(id);
+  const handleCatDragOver=(e,id)=>{e.preventDefault();setDragOverId(id);};
+  const handleCatDrop=(e,targetId)=>{
+    e.preventDefault();
+    if(!dragCatId||dragCatId===targetId)return;
+    setCatsP(cs=>{
+      const arr=[...cs];
+      const from=arr.findIndex(c=>c.id===dragCatId);
+      const to=arr.findIndex(c=>c.id===targetId);
+      if(from<0||to<0)return cs;
+      const [item]=arr.splice(from,1);
+      arr.splice(to,0,item);
+      return arr;
+    });
+    setDragCatId(null);setDragOverId(null);
+  };
+  const handleCatDragEnd=()=>{setDragCatId(null);setDragOverId(null);};
   const setCatsP=(fn)=>setCats(prev=>{const next=typeof fn==="function"?fn(prev):fn;try{localStorage.setItem("mdt_cats",JSON.stringify(next));}catch{}return next;});
   const setDarkP=(fn)=>setDark(prev=>{const next=typeof fn==="function"?fn(prev):fn;try{localStorage.setItem("mdt_dark",String(next));}catch{}return next;});
 
@@ -875,16 +892,20 @@ export default function App(){
     </div>);
   };
 
-  const SidebarContent=()=>(<div style={{padding:"13px 10px 10px"}}>
+  const sidebarJSX=(<div style={{padding:"13px 10px 10px"}}>
     <p style={{margin:"0 0 7px 6px",color:th.text6,fontSize:10,fontWeight:700,letterSpacing:2,textTransform:"uppercase"}}>Navegación</p>
     <SI id="overview" label="Vista General" icon="◫" badge={0}/>
     <SI id="cal-equipo" label="Calendario equipo" icon="👥" badge={0}/>
     <SI id="cal-tareas" label="Calendario tareas" icon="📌" badge={0}/>
-    <SI id="cal-personal" label="Calendario personal" icon="🌿" badge={0}/>
     <SI id="history" label={`Historial (${totalDone})`} icon="✓" badge={0}/>
     <div style={{height:1,background:th.border3,margin:"9px 4px"}}/>
     <p style={{margin:"0 0 7px 6px",color:th.text6,fontSize:10,fontWeight:700,letterSpacing:2,textTransform:"uppercase"}}>Categorías</p>
-    {cats.map(c=><SI key={c.id} id={c.id} label={c.name} icon={c.icon} cIdx={c.colorIdx} badge={c.tasks.filter(t=>!t.done).length}/>)}
+    {cats.map(c=>(
+      <div key={c.id} draggable onDragStart={()=>handleCatDragStart(c.id)} onDragOver={e=>handleCatDragOver(e,c.id)} onDrop={e=>handleCatDrop(e,c.id)} onDragEnd={handleCatDragEnd}
+        style={{opacity:dragCatId===c.id?0.4:1,borderRadius:10,transition:"opacity 0.15s",outline:dragOverId===c.id&&dragCatId!==c.id?"2px dashed #4ECDC4":"none",cursor:"grab"}}>
+        <SI id={c.id} label={c.name} icon={c.icon} cIdx={c.colorIdx} badge={c.tasks.filter(t=>!t.done).length}/>
+      </div>
+    ))}
     {!showNc?(<button onClick={()=>setShowNc(true)} style={{width:"100%",marginTop:6,padding:"8px 10px",borderRadius:10,border:`1.5px dashed ${th.border}`,background:"transparent",color:th.text6,fontSize:12,cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:8}}><span>＋</span> Nueva categoría</button>):(
       <div style={{background:th.surface,borderRadius:12,padding:11,border:`1px solid ${th.border}`,marginTop:6,display:"flex",flexDirection:"column",gap:8}}>
         <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>{ICONS.map(ic=><span key={ic} onClick={()=>setNcIcon(ic)} style={{fontSize:16,cursor:"pointer",padding:3,borderRadius:6,background:ncIcon===ic?th.border:"transparent"}}>{ic}</span>)}</div>
@@ -924,7 +945,7 @@ export default function App(){
       {mobileSidebarOpen&&<div style={{position:"fixed",inset:0,zIndex:200,display:"flex"}}>
         <div style={{width:240,background:th.sidebar,borderRight:`1px solid ${th.border3}`,overflowY:"auto",boxShadow:"4px 0 20px #0006"}}>
           <div style={{display:"flex",justifyContent:"flex-end",padding:"10px 10px 0"}}><button onClick={()=>setMobileSidebarOpen(false)} style={{background:"none",border:"none",color:th.text3,fontSize:18,cursor:"pointer"}}>✕</button></div>
-          <SidebarContent/>
+          {sidebarJSX}
         </div>
         <div style={{flex:1,background:"#0008"}} onClick={()=>setMobileSidebarOpen(false)}/>
       </div>}
@@ -932,7 +953,7 @@ export default function App(){
       <div style={{display:"flex",flex:1,overflow:"hidden"}}>
         {/* Desktop sidebar */}
         <div style={{width:215,minWidth:215,borderRight:`1px solid ${th.border3}`,overflowY:"auto",background:th.sidebar}} className="desktop-sidebar">
-          <SidebarContent/>
+          {sidebarJSX}
         </div>
 
         {/* Main */}
