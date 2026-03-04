@@ -764,7 +764,7 @@ function PersonalView({cat,th,dark,calData,onToggle,onDelete,onUpdate,onAddTask}
 // ── Main App ───────────────────────────────────────────────────
 export default function App(){
   const [dark,setDark]=useState(()=>{try{const v=localStorage.getItem("mdt_dark");return v===null?true:v==="true";}catch{return true;}});
-  useEffect(()=>{document.title="🌊 mardetareas";},[]);
+  useEffect(()=>{document.title="mardetareas";},[]);
   const [cats,setCats]=useState(()=>{
     try{
       const v=localStorage.getItem("mdt_cats");
