@@ -769,15 +769,20 @@ export default function App(){
       const v=localStorage.getItem("mdt_cats");
       if(!v)return INITIAL;
       let stored=JSON.parse(v);
-      // Migration: add Personal category if missing
-      if(!stored.find(c=>c.type==="personal")){
-        const personalCat={id:"c5",name:"Personal",icon:"🌿",colorIdx:8,type:"personal",tasks:[]};
-        // Insert before meeting categories
-        const meetingIdx=stored.findIndex(c=>c.type==="meeting"||c.type==="meeting121eq");
-        if(meetingIdx>=0)stored=[...stored.slice(0,meetingIdx),personalCat,...stored.slice(meetingIdx)];
-        else stored=[...stored,personalCat];
-        localStorage.setItem("mdt_cats",JSON.stringify(stored));
-      }
+      let changed=false;
+      // Migration: restore special categories if missing
+      const specials=[
+        {id:"c5",name:"Personal",icon:"🌿",colorIdx:8,type:"personal"},
+        {id:"c6",name:"121 Manager",icon:"🎙️",colorIdx:6,type:"meeting"},
+        {id:"c7",name:"121 Equipo",icon:"🗓️",colorIdx:7,type:"meeting121eq"},
+      ];
+      specials.forEach(spec=>{
+        if(!stored.find(c=>c.type===spec.type)){
+          stored=[...stored,{...spec,tasks:[]}];
+          changed=true;
+        }
+      });
+      if(changed)localStorage.setItem("mdt_cats",JSON.stringify(stored));
       return stored;
     }catch{return INITIAL;}
   });
