@@ -443,8 +443,14 @@ function UpcomingGroup({title,tasks,icon,color,th,dark,defaultOpen=false,onNavig
 
 // ── Main App ───────────────────────────────────────────────────
 export default function App(){
-  const [dark,setDark]=useState(true);const th=dark?DARK:LIGHT;
-  const [cats,setCats]=useState(INITIAL);
+  // ── Persistence ──────────────────────────────────────────────
+  const [dark,setDark]=useState(()=>{try{const v=localStorage.getItem("mdt_dark");return v===null?true:v==="true";}catch{return true;}});
+  const [cats,setCats]=useState(()=>{try{const v=localStorage.getItem("mdt_cats");return v?JSON.parse(v):INITIAL;}catch{return INITIAL;}});
+  const th=dark?DARK:LIGHT;
+
+  // Auto-save whenever cats or dark changes
+  const setCatsP=(fn)=>setCats(prev=>{const next=typeof fn==="function"?fn(prev):fn;try{localStorage.setItem("mdt_cats",JSON.stringify(next));}catch{}return next;});
+  const setDarkP=(fn)=>setDark(prev=>{const next=typeof fn==="function"?fn(prev):fn;try{localStorage.setItem("mdt_dark",String(next));}catch{}return next;});
   const [tab,setTab]=useState("overview");
   const [ncName,setNcName]=useState("");const [ncIcon,setNcIcon]=useState("📊");const [ncColor,setNcColor]=useState(0);const [showNc,setShowNc]=useState(false);
   const [editCatId,setEditCatId]=useState(null);const [editCatName,setEditCatName]=useState("");
@@ -456,19 +462,19 @@ export default function App(){
   const doneTasks=allTasks.filter(t=>t.done).sort((a,b)=>(b.completedAt||"").localeCompare(a.completedAt||""));
   const totalAll=allTasks.length;const totalDone=doneTasks.length;
 
-  const updTask=(cId,tId,patch)=>setCats(cs=>cs.map(c=>c.id!==cId?c:{...c,tasks:c.tasks.map(t=>t.id!==tId?t:{...t,...patch})}));
-  const togTask=(cId,tId)=>setCats(cs=>cs.map(c=>c.id!==cId?c:{...c,tasks:c.tasks.map(t=>t.id!==tId?t:{...t,done:!t.done,completedAt:!t.done?today():null})}));
-  const delTask=(cId,tId)=>setCats(cs=>cs.map(c=>c.id!==cId?c:{...c,tasks:c.tasks.filter(t=>t.id!==tId)}));
+  const updTask=(cId,tId,patch)=>setCatsP(cs=>cs.map(c=>c.id!==cId?c:{...c,tasks:c.tasks.map(t=>t.id!==tId?t:{...t,...patch})}));
+  const togTask=(cId,tId)=>setCatsP(cs=>cs.map(c=>c.id!==cId?c:{...c,tasks:c.tasks.map(t=>t.id!==tId?t:{...t,done:!t.done,completedAt:!t.done?today():null})}));
+  const delTask=(cId,tId)=>setCatsP(cs=>cs.map(c=>c.id!==cId?c:{...c,tasks:c.tasks.filter(t=>t.id!==tId)}));
 
   const addTask=(cId)=>{
     const text=nText[cId]?.trim();if(!text)return;
-    setCats(cs=>cs.map(c=>c.id!==cId?c:{...c,tasks:[...c.tasks,{id:genId(),text,done:false,priority:nPri[cId]||"media",createdAt:today(),deadline:nDl[cId]||null,completedAt:null,jiraUrl:"",description:"",checklist:[],contacts:[],labels:[]}]}));
+    setCatsP(cs=>cs.map(c=>c.id!==cId?c:{...c,tasks:[...c.tasks,{id:genId(),text,done:false,priority:nPri[cId]||"media",createdAt:today(),deadline:nDl[cId]||null,completedAt:null,jiraUrl:"",description:"",checklist:[],contacts:[],labels:[]}]}));
     setNText(p=>({...p,[cId]:""}));setNDl(p=>({...p,[cId]:""}));
   };
 
   // 121 Manager: carry pending items to new meeting
   const addMeeting=(cId)=>{
-    setCats(cs=>cs.map(c=>{
+    setCatsP(cs=>cs.map(c=>{
       if(c.id!==cId)return c;
       // Capture pending items from current first active meeting BEFORE creating new one
       const lastM=c.tasks.find(t=>!t.done);
@@ -480,7 +486,7 @@ export default function App(){
 
   // 121 Equipo: new meeting for a collaborator, carry their pending items
   const addTeamMeeting=(cId)=>{
-    setCats(cs=>cs.map(c=>{
+    setCatsP(cs=>cs.map(c=>{
       if(c.id!==cId)return c;
       // New empty meeting — user fills collaborator; carry-forward happens when collaborator is set
       // We create with empty collaborator; pending carry is triggered via onUpdate collaborator change
@@ -490,7 +496,7 @@ export default function App(){
 
   // When collaborator is set on a team meeting, auto-carry pending items from last meeting with same collaborator
   const setTeamMeetingCollaborator=(cId,tId,collaborator)=>{
-    setCats(cs=>cs.map(c=>{
+    setCatsP(cs=>cs.map(c=>{
       if(c.id!==cId)return c;
       const thisMeeting=c.tasks.find(t=>t.id===tId);
       // Only carry if collaborator just set and checklist is still empty
@@ -505,9 +511,9 @@ export default function App(){
     }));
   };
 
-  const addCat=()=>{if(!ncName.trim())return;setCats(cs=>[...cs,{id:genId(),name:ncName.trim(),icon:ncIcon,colorIdx:ncColor,type:"tasks",tasks:[]}]);setNcName("");setShowNc(false);};
-  const delCat=(id)=>{setCats(cs=>cs.filter(c=>c.id!==id));if(tab===id)setTab("overview");};
-  const saveCatName=(id)=>{if(editCatName.trim())setCats(cs=>cs.map(c=>c.id===id?{...c,name:editCatName.trim()}:c));setEditCatId(null);};
+  const addCat=()=>{if(!ncName.trim())return;setCatsP(cs=>[...cs,{id:genId(),name:ncName.trim(),icon:ncIcon,colorIdx:ncColor,type:"tasks",tasks:[]}]);setNcName("");setShowNc(false);};
+  const delCat=(id)=>{setCatsP(cs=>cs.filter(c=>c.id!==id));if(tab===id)setTab("overview");};
+  const saveCatName=(id)=>{if(editCatName.trim())setCatsP(cs=>cs.map(c=>c.id===id?{...c,name:editCatName.trim()}:c));setEditCatId(null);};
 
   const PORD={alta:0,media:1,baja:2};
   const sortT=(tasks)=>{
@@ -553,7 +559,8 @@ export default function App(){
         <div style={{display:"flex",alignItems:"center",gap:10}}>
           <div style={{height:4,width:110,background:th.border2,borderRadius:99}}><div style={{height:4,borderRadius:99,transition:"width 0.5s",width:totalAll?`${(totalDone/totalAll)*100}%`:"0%",background:"linear-gradient(90deg,#4ECDC4,#6BCB77)"}}/></div>
           <span style={{color:"#4ECDC4",fontWeight:800,fontSize:12}}>{totalAll?Math.round((totalDone/totalAll)*100):0}%</span>
-          <button onClick={()=>setDark(d=>!d)} style={{padding:"6px 12px",borderRadius:99,border:`1px solid ${th.border}`,background:th.surface,color:th.text3,fontSize:13,cursor:"pointer"}}>{dark?"☀️":"🌙"}</button>
+          <button onClick={()=>setDarkP(d=>!d)} style={{padding:"6px 12px",borderRadius:99,border:`1px solid ${th.border}`,background:th.surface,color:th.text3,fontSize:13,cursor:"pointer"}}>{dark?"☀️":"🌙"}</button>
+          <button title="Borrar todos los datos" onClick={()=>{if(window.confirm("¿Borrar todos los datos? Esta acción no se puede deshacer.")){localStorage.removeItem("mdt_cats");localStorage.removeItem("mdt_dark");window.location.reload();}}} style={{padding:"6px 10px",borderRadius:99,border:`1px solid ${th.border}`,background:"transparent",color:th.text6,fontSize:12,cursor:"pointer"}}>🗑️</button>
         </div>
       </div>
 
