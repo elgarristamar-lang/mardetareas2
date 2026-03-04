@@ -527,7 +527,7 @@ function Dashboard({cats,th,dark,onNavigate}){
   const last30=new Date();last30.setDate(last30.getDate()-30);
   const recentDone=nonMtgCats.flatMap(c=>c.tasks.filter(t=>t.done&&t.completedAt&&new Date(t.completedAt)>=last30));
 
-  const maxDone=Math.max(...byCategory.map(c=>c.done),1);
+  
 
   return(<div style={{marginBottom:28}}>
     <h3 style={{color:th.text,fontSize:14,fontWeight:800,marginBottom:14,marginTop:0}}>📊 Dashboard</h3>
@@ -543,7 +543,7 @@ function Dashboard({cats,th,dark,onNavigate}){
         <div key={c.id} onClick={()=>onNavigate(c.id)} style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,cursor:"pointer"}}>
           <span style={{fontSize:14,flexShrink:0}}>{c.icon}</span>
           <div style={{width:85,fontSize:11,color:th.text3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",flexShrink:0}}>{c.name}</div>
-          <div style={{flex:1,height:8,background:th.border2,borderRadius:99,overflow:"hidden",minWidth:0}}><div style={{height:8,borderRadius:99,background:color.accent,width:`${Math.round((c.done/maxDone)*100)}%`,transition:"width 0.5s"}}/></div>
+          <div style={{flex:1,height:8,background:th.border2,borderRadius:99,overflow:"hidden",minWidth:0}}><div style={{height:8,borderRadius:99,background:color.accent,width:`${c.pct}%`,transition:"width 0.5s"}}/></div>
           <span style={{fontSize:11,color:color.tc,minWidth:36,textAlign:"right",flexShrink:0}}>{c.done}/{c.total}</span>
         </div>
       );})}
