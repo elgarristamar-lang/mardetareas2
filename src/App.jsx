@@ -486,7 +486,10 @@ function CalendarView({th,dark,calData,onCalDataUpdate}){
             const presCount=activeMembers.filter(m=>{const s=getStatus(row[m]);return s===CAL_STATUS.P||s===CAL_STATUS.PD;}).length;
             const ttCount=activeMembers.filter(m=>getStatus(row[m])===CAL_STATUS.TT).length;
             const vacCount=activeMembers.filter(m=>getStatus(row[m])===CAL_STATUS.V).length;
-            const lowPresencial=!selectedMember&&presCount<2&&!allF;
+            const festCount=activeMembers.filter(m=>row[m]==="F").length;
+            // "available" = total minus TT, vacaciones, festivos — should be >= 2 presencial
+            const available=activeMembers.length-ttCount-vacCount-festCount;
+            const lowPresencial=!selectedMember&&!allF&&presCount<2;
             return(<div key={date} style={{padding:"5px 8px",borderRadius:8,background:lowPresencial?dark?"#2A0808":"#FFF0F0":th.border3,border:`1.5px solid ${lowPresencial?"#FF6B6B":th.border2}`,display:"flex",flexDirection:"column",gap:3}}>
               {presCount>0&&<span style={{fontSize:11,fontWeight:700,color:"#111"}}>🏢 {presCount}</span>}
               {ttCount>0&&<span style={{fontSize:11,fontWeight:700,color:"#111"}}>🏠 {ttCount}</span>}
@@ -653,36 +656,131 @@ function TasksCalendarView({cats,th,dark,onNavigate}){
   </div>);
 }
 
-function PersonalView({cat,th,dark,onToggle,onDelete,onUpdate,onAddTask}){
+function PersonalView({cat,th,dark,calData,onToggle,onDelete,onUpdate,onAddTask}){
   const color=gc(COLORS[cat.colorIdx],dark);
   const [nText,setNText]=useState("");const [nDl,setNDl]=useState("");const [nPri,setNPri]=useState("media");
+  const [weekStart,setWeekStart]=useState(getWeekStart(today()));
   const pend=cat.tasks.filter(t=>!t.done);
+  const data=calData||CAL_DATA;
+
   const addTask=()=>{
     if(!nText.trim())return;
     onAddTask({id:genId(),text:nText.trim(),done:false,priority:nPri,createdAt:today(),deadline:nDl||null,completedAt:null,jiraUrl:"",description:"",checklist:[],contacts:[],labels:[]});
     setNText("");setNDl("");
   };
+
+  const todayStr=today();
+  const weekDates=Array.from({length:5},(_,i)=>addDays(weekStart,i));
+  const weekData=weekDates.map(date=>({date,row:(data.find(r=>r.date===date)||null)}));
+  const calRow=data.find(r=>weekDates.includes(r.date));
+  const semanaLabel=calRow?.semana||"";
+  const goWeek=(n)=>setWeekStart(addDays(weekStart,n*7));
+
   return(<div>
-    <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:18}}>
-      <div style={{width:40,height:40,borderRadius:11,background:color.light,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>{cat.icon}</div>
-      <div><h2 style={{margin:0,color:th.text,fontSize:18,fontWeight:800}}>{cat.name}</h2><span style={{color:th.text5,fontSize:11}}>{pend.length} pendientes · solo se muestran tareas activas</span></div>
-    </div>
-    <div style={{background:th.surface2,borderRadius:12,padding:12,marginBottom:16,border:`1px solid ${th.border2}`}}>
-      <div style={{display:"flex",gap:7,marginBottom:8}}>
-        <input value={nText} onChange={e=>setNText(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addTask()} placeholder="Nueva tarea personal..." style={{...inp(th),flex:1}}/>
-        <button onClick={addTask} style={{padding:"8px 14px",borderRadius:8,background:color.bg,border:"none",color:"#fff",fontWeight:800,fontSize:13,cursor:"pointer"}}>＋</button>
+    {/* ── Section: Tareas personales ── */}
+    <div style={{marginBottom:0}}>
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:14}}>
+        <div style={{width:40,height:40,borderRadius:11,background:color.light,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>{cat.icon}</div>
+        <div>
+          <h2 style={{margin:0,color:th.text,fontSize:18,fontWeight:800}}>{cat.name}</h2>
+          <span style={{color:th.text5,fontSize:11}}>{pend.length} pendiente{pend.length!==1?"s":""} · solo se muestran tareas activas</span>
+        </div>
       </div>
-      <div style={{display:"flex",gap:7,flexWrap:"wrap",alignItems:"center"}}>
-        <input type="date" value={nDl} onChange={e=>setNDl(e.target.value)} style={{...inp(th,{fontSize:11.5,padding:"4px 8px",colorScheme:dark?"dark":"light"})}}/>
-        {Object.entries(PRIORITY).map(([k])=>(<button key={k} onClick={()=>setNPri(k)} style={{padding:"3px 10px",borderRadius:99,fontSize:11.5,cursor:"pointer",...ps(k,nPri===k,dark)}}>{PRIORITY[k].dot} {PRIORITY[k].label}</button>))}
+      <div style={{background:th.surface2,borderRadius:12,padding:12,marginBottom:12,border:`1px solid ${th.border2}`}}>
+        <div style={{display:"flex",gap:7,marginBottom:8}}>
+          <input value={nText} onChange={e=>setNText(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addTask()} placeholder="Nueva tarea personal..." style={{...inp(th),flex:1}}/>
+          <button onClick={addTask} style={{padding:"8px 14px",borderRadius:8,background:color.bg,border:"none",color:"#fff",fontWeight:800,fontSize:13,cursor:"pointer"}}>＋</button>
+        </div>
+        <div style={{display:"flex",gap:7,flexWrap:"wrap",alignItems:"center"}}>
+          <input type="date" value={nDl} onChange={e=>setNDl(e.target.value)} style={{...inp(th,{fontSize:11.5,padding:"4px 8px",colorScheme:dark?"dark":"light"})}}/>
+          {Object.entries(PRIORITY).map(([k])=>(<button key={k} onClick={()=>setNPri(k)} style={{padding:"3px 10px",borderRadius:99,fontSize:11.5,cursor:"pointer",...ps(k,nPri===k,dark)}}>{PRIORITY[k].dot} {PRIORITY[k].label}</button>))}
+        </div>
+      </div>
+      {pend.length===0?(
+        <div style={{textAlign:"center",padding:"20px 0 10px",color:th.text6}}>
+          <div style={{fontSize:26,marginBottom:4}}>✨</div>
+          <div style={{fontSize:13,fontWeight:700,color:th.text4}}>¡Todo al día!</div>
+          <div style={{fontSize:11,marginTop:3}}>No hay tareas personales pendientes</div>
+        </div>
+      ):(
+        pend.map(t=>(<TaskRow key={t.id} task={t} color={color} th={th} onToggle={()=>onToggle(t.id)} onDelete={()=>onDelete(t.id)} onUpdate={p=>onUpdate(t.id,p)}/>))
+      )}
+    </div>
+
+    {/* ── Section divider ── */}
+    <div style={{display:"flex",alignItems:"center",gap:12,margin:"22px 0 16px"}}>
+      <div style={{flex:1,height:1,background:th.border2}}/>
+      <span style={{fontSize:11,fontWeight:700,color:th.text5,letterSpacing:1,textTransform:"uppercase",whiteSpace:"nowrap"}}>👥 Equipo esta semana</span>
+      <div style={{flex:1,height:1,background:th.border2}}/>
+    </div>
+
+    {/* ── Section: Mini team calendar ── */}
+    <div style={{background:th.surface2,borderRadius:14,padding:14,border:`1px solid ${th.border2}`}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+        <span style={{color:th.text5,fontSize:11}}>{semanaLabel} · {fmtShort(weekStart)} – {fmtShort(addDays(weekStart,4))}</span>
+        <div style={{display:"flex",gap:5}}>
+          <button onClick={()=>goWeek(-1)} style={{padding:"4px 9px",borderRadius:7,border:`1px solid ${th.border}`,background:th.surface,color:th.text3,cursor:"pointer",fontSize:12}}>‹</button>
+          <button onClick={()=>setWeekStart(getWeekStart(todayStr))} style={{padding:"4px 8px",borderRadius:7,border:`1px solid ${th.border}`,background:th.surface,color:th.text3,cursor:"pointer",fontSize:10}}>Hoy</button>
+          <button onClick={()=>goWeek(1)} style={{padding:"4px 9px",borderRadius:7,border:`1px solid ${th.border}`,background:th.surface,color:th.text3,cursor:"pointer",fontSize:12}}>›</button>
+        </div>
+      </div>
+      <div style={{overflowX:"auto"}}>
+        <div style={{minWidth:420}}>
+          {/* Day headers */}
+          <div style={{display:"grid",gridTemplateColumns:"90px repeat(5,1fr)",gap:3,marginBottom:3}}>
+            <div/>
+            {weekData.map(({date})=>{
+              const isToday=date===todayStr;
+              const d=new Date(date+"T12:00:00");
+              return(<div key={date} style={{textAlign:"center",padding:"4px 2px",borderRadius:6,background:isToday?dark?"#0D1E35":"#EBF4FF":"transparent",border:isToday?"1px solid #74B9FF44":"1px solid transparent"}}>
+                <div style={{fontSize:10,color:isToday?"#74B9FF":th.text3,fontWeight:600}}>{WEEK_DAYS_ES[d.getDay()-1]||""}</div>
+                <div style={{fontSize:13,fontWeight:800,color:isToday?"#74B9FF":th.text}}>{d.getDate()}</div>
+              </div>);
+            })}
+          </div>
+          {/* Member rows */}
+          {CAL_MEMBERS.map(member=>(
+            <div key={member} style={{display:"grid",gridTemplateColumns:"90px repeat(5,1fr)",gap:3,marginBottom:3}}>
+              <div style={{display:"flex",alignItems:"center",gap:5,padding:"4px 6px",borderRadius:6,background:th.surface,border:`1px solid ${th.border2}`}}>
+                <div style={{width:20,height:20,borderRadius:99,background:"#74B9FF22",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"#74B9FF",flexShrink:0}}>{member[0]}</div>
+                <span style={{fontSize:11,fontWeight:600,color:th.text2}}>{member[0]+member.slice(1).toLowerCase()}</span>
+              </div>
+              {weekData.map(({date,row})=>{
+                const val=row?row[member]:"";
+                const st=getStatus(val);
+                const isEmpty=!val;
+                const isFestivo=val==="F";
+                return(<div key={date} style={{padding:"4px 5px",borderRadius:6,background:isEmpty||isFestivo?th.border3:dark?st.bg:st.bgL,border:`1px solid ${isEmpty||isFestivo?th.border2:st.color+"33"}`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:40,gap:1}}>
+                  {isFestivo?<span style={{fontSize:11}}>🎉</span>:isEmpty?<span style={{fontSize:9,color:th.text6}}>—</span>:<>
+                    <span style={{fontSize:14}}>{st.icon}</span>
+                    <span style={{fontSize:8,fontWeight:700,color:st.color}}>{val.length>5?val.slice(0,5)+"…":val}</span>
+                  </>}
+                </div>);
+              })}
+            </div>
+          ))}
+          {/* OFICINA summary */}
+          <div style={{display:"grid",gridTemplateColumns:"90px repeat(5,1fr)",gap:3,marginTop:5}}>
+            <div style={{display:"flex",alignItems:"center",padding:"4px 6px"}}><span style={{fontSize:9,color:"#111",fontWeight:800,letterSpacing:0.5}}>OFICINA</span></div>
+            {weekData.map(({date,row})=>{
+              if(!row)return<div key={date} style={{borderRadius:6,background:th.border3,border:`1px solid ${th.border2}`}}/>;
+              const allF=CAL_MEMBERS.every(m=>row[m]==="F");
+              if(allF)return<div key={date} style={{borderRadius:6,background:th.border3,border:`1px solid ${th.border2}`,minHeight:30}}/>;
+              const presCount=CAL_MEMBERS.filter(m=>{const s=getStatus(row[m]);return s===CAL_STATUS.P||s===CAL_STATUS.PD;}).length;
+              const ttCount=CAL_MEMBERS.filter(m=>getStatus(row[m])===CAL_STATUS.TT).length;
+              const vacCount=CAL_MEMBERS.filter(m=>getStatus(row[m])===CAL_STATUS.V).length;
+              const low=!allF&&presCount<2;
+              return(<div key={date} style={{padding:"4px 6px",borderRadius:6,background:low?dark?"#2A0808":"#FFF0F0":th.border3,border:`1.5px solid ${low?"#FF6B6B":th.border2}`,display:"flex",flexDirection:"column",gap:2}}>
+                {presCount>0&&<span style={{fontSize:10,fontWeight:700,color:"#111"}}>🏢 {presCount}</span>}
+                {ttCount>0&&<span style={{fontSize:10,fontWeight:700,color:"#111"}}>🏠 {ttCount}</span>}
+                {vacCount>0&&<span style={{fontSize:10,fontWeight:700,color:"#111"}}>🌴 {vacCount}</span>}
+                {low&&<span style={{fontSize:8,color:"#FF6B6B",fontWeight:800}}>⚠️ Bajo</span>}
+              </div>);
+            })}
+          </div>
+        </div>
       </div>
     </div>
-    {pend.length===0&&<div style={{textAlign:"center",padding:"40px 0",color:th.text6}}>
-      <div style={{fontSize:32,marginBottom:8}}>✨</div>
-      <div style={{fontSize:14,fontWeight:700,color:th.text4}}>¡Todo al día!</div>
-      <div style={{fontSize:12,marginTop:4}}>No hay tareas personales pendientes</div>
-    </div>}
-    {pend.map(t=>(<TaskRow key={t.id} task={t} color={color} th={th} onToggle={()=>onToggle(t.id)} onDelete={()=>onDelete(t.id)} onUpdate={p=>onUpdate(t.id,p)}/>))}
   </div>);
 }
 
@@ -901,7 +999,7 @@ export default function App(){
 
           {/* PERSONAL */}
           {selCat&&selCat.type==="personal"&&(
-            <PersonalView cat={selCat} th={th} dark={dark}
+            <PersonalView cat={selCat} th={th} dark={dark} calData={calData}
               onToggle={tId=>togTask(selCat.id,tId)}
               onDelete={tId=>delTask(selCat.id,tId)}
               onUpdate={(tId,p)=>updTask(selCat.id,tId,p)}
