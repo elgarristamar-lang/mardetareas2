@@ -504,12 +504,31 @@ function CalendarView({th,dark,calData,onCalDataUpdate}){
 
 // ── Dashboard ─────────────────────────────────────────────────
 function Dashboard({cats,th,dark,onNavigate}){
-  const totalDone=cats.reduce((a,c)=>a+c.tasks.filter(t=>t.done).length,0);
-  const totalAll=cats.reduce((a,c)=>a+c.tasks.length,0);
+  const isMtg=(t)=>t==="meeting"||t==="meeting121eq";
+
+  // Per-category stats: for meetings count checklist items, for others count tasks
+  const byCategory=cats.filter(c=>c.type!=="personal").map(c=>{
+    let done,total;
+    if(isMtg(c.type)){
+      const items=c.tasks.flatMap(m=>m.checklist||[]);
+      done=items.filter(i=>i.state==="Completada").length;
+      total=items.length;
+    } else {
+      done=c.tasks.filter(t=>t.done).length;
+      total=c.tasks.length;
+    }
+    return{id:c.id,name:c.name,icon:c.icon,colorIdx:c.colorIdx,type:c.type,done,total,pct:total?Math.round((done/total)*100):0};
+  });
+
+  // Global totals exclude personal and meetings (meetings use checklist counts)
+  const nonMtgCats=cats.filter(c=>c.type==="tasks");
+  const totalDone=nonMtgCats.reduce((a,c)=>a+c.tasks.filter(t=>t.done).length,0);
+  const totalAll=nonMtgCats.reduce((a,c)=>a+c.tasks.length,0);
   const last30=new Date();last30.setDate(last30.getDate()-30);
-  const recentDone=cats.flatMap(c=>c.tasks.filter(t=>t.done&&t.completedAt&&new Date(t.completedAt)>=last30));
-  const byCategory=cats.map(c=>{const done=c.tasks.filter(t=>t.done).length;const total=c.tasks.length;return{id:c.id,name:c.name,icon:c.icon,colorIdx:c.colorIdx,done,total,pct:total?Math.round((done/total)*100):0};});
-  const maxDone=Math.max(...byCategory.map(c=>c.done),1);
+  const recentDone=nonMtgCats.flatMap(c=>c.tasks.filter(t=>t.done&&t.completedAt&&new Date(t.completedAt)>=last30));
+
+  const maxTotal=Math.max(...byCategory.map(c=>c.total),1);
+
   return(<div style={{marginBottom:28}}>
     <h3 style={{color:th.text,fontSize:14,fontWeight:800,marginBottom:14,marginTop:0}}>📊 Dashboard</h3>
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(130px,1fr))",gap:10,marginBottom:18}}>
@@ -524,7 +543,7 @@ function Dashboard({cats,th,dark,onNavigate}){
         <div key={c.id} onClick={()=>onNavigate(c.id)} style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,cursor:"pointer"}}>
           <span style={{fontSize:14,flexShrink:0}}>{c.icon}</span>
           <div style={{width:85,fontSize:11,color:th.text3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",flexShrink:0}}>{c.name}</div>
-          <div style={{flex:1,height:8,background:th.border2,borderRadius:99,overflow:"hidden"}}><div style={{height:8,borderRadius:99,background:color.accent,width:`${c.total?Math.round((c.done/maxDone)*100):0}%`,transition:"width 0.5s"}}/></div>
+          <div style={{flex:1,height:8,background:th.border2,borderRadius:99,overflow:"hidden"}}><div style={{height:8,borderRadius:99,background:color.accent,width:`${c.total?Math.round((c.total/maxTotal)*100)*( c.done/c.total):0}%`,transition:"width 0.5s"}}/></div>
           <span style={{fontSize:11,color:color.tc,minWidth:36,textAlign:"right",flexShrink:0}}>{c.done}/{c.total}</span>
         </div>
       );})}
@@ -579,16 +598,16 @@ function TasksCalendarView({cats,th,dark,onNavigate,personalOnly=false}){
     });
   });
 
-  // Also collect meeting dates (only for non-personal view)
-  if(!personalOnly){
-    cats.filter(c=>c.type==="meeting"||c.type==="meeting121eq").forEach(cat=>{
-      const color=gc(COLORS[cat.colorIdx],dark);
-      cat.tasks.filter(m=>!m.done&&m.date).forEach(m=>{
-        if(!tasksByDate[m.date])tasksByDate[m.date]=[];
-        tasksByDate[m.date].push({id:m.id,text:m.collaborator||m.meetingId,catName:cat.name,catIcon:cat.icon,catId:cat.id,catColor:color,isMeeting:true,priority:"media"});
+  // Collect checklist items with deadlines from meeting categories
+  cats.filter(c=>c.type==="meeting"||c.type==="meeting121eq").forEach(cat=>{
+    const color=gc(COLORS[cat.colorIdx],dark);
+    cat.tasks.filter(m=>!m.done).forEach(m=>{
+      (m.checklist||[]).filter(i=>i.deadline&&i.state!=="Completada").forEach(i=>{
+        if(!tasksByDate[i.deadline])tasksByDate[i.deadline]=[];
+        tasksByDate[i.deadline].push({id:i.id,text:i.text,catName:cat.name,catIcon:cat.icon,catId:cat.id,catColor:color,isMeeting:false,priority:"media",meetingId:m.meetingId,collaborator:m.collaborator});
       });
     });
-  }
+  });
 
   const calRow=CAL_DATA.find(r=>weekDates.includes(r.date));
   const semanaLabel=calRow?.semana||`Semana del ${fmtShort(weekStart)}`;
@@ -978,16 +997,38 @@ export default function App(){
               <h2 style={{margin:"0 0 16px",color:th.text,fontSize:17,fontWeight:800}}>Vista General</h2>
               <Dashboard cats={cats} th={th} dark={dark} onNavigate={navigateTo}/>
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(170px,1fr))",gap:10,marginBottom:24}}>
-                {cats.map(cat=>{const color=gc(COLORS[cat.colorIdx],dark);const pend=cat.tasks.filter(t=>!t.done);const done=cat.tasks.filter(t=>t.done).length;const total=cat.tasks.length;return(
+                {cats.map(cat=>{
+                  const color=gc(COLORS[cat.colorIdx],dark);
+                  let done,total,subtitle,progress;
+                  if(isMeeting(cat.type)){
+                    const items=cat.tasks.flatMap(m=>m.checklist||[]);
+                    done=items.filter(i=>i.state==="Completada").length;
+                    total=items.length;
+                    const mtgPend=cat.tasks.filter(m=>!m.done).length;
+                    subtitle=`${cat.tasks.length} reuniones`;
+                    progress=total?`${done}/${total} puntos`;
+                  } else if(cat.type==="personal"){
+                    const pend=cat.tasks.filter(t=>!t.done).length;
+                    done=0;total=cat.tasks.length;
+                    subtitle=`${total} personales`;
+                    progress=`${pend} pendientes`;
+                  } else {
+                    done=cat.tasks.filter(t=>t.done).length;
+                    total=cat.tasks.length;
+                    subtitle=`${total} tareas`;
+                    progress=`${done}/${total} hechas`;
+                  }
+                  const pct=total?(done/total)*100:0;
+                  return(
                   <div key={cat.id} onClick={()=>navigateTo(cat.id)} style={{background:th.cardBg,border:`1px solid ${th.border2}`,borderRadius:13,padding:13,cursor:"pointer",transition:"all 0.18s",boxShadow:dark?"none":"0 2px 8px #0001"}}
                     onMouseEnter={e=>{e.currentTarget.style.borderColor=color.accent+"66";e.currentTarget.style.transform="translateY(-2px)";}}
                     onMouseLeave={e=>{e.currentTarget.style.borderColor=th.border2;e.currentTarget.style.transform="none";}}>
                     <div style={{display:"flex",alignItems:"center",gap:9,marginBottom:9}}>
                       <div style={{width:32,height:32,borderRadius:9,background:color.light,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>{cat.icon}</div>
-                      <div><div style={{color:th.text,fontWeight:700,fontSize:12.5}}>{cat.name}</div><div style={{color:th.text5,fontSize:10}}>{total} {isMeeting(cat.type)?"reuniones":cat.type==="personal"?"personales":"tareas"}</div></div>
+                      <div><div style={{color:th.text,fontWeight:700,fontSize:12.5}}>{cat.name}</div><div style={{color:th.text5,fontSize:10}}>{subtitle}</div></div>
                     </div>
-                    <div style={{height:3,background:th.border2,borderRadius:99,marginBottom:6}}><div style={{height:3,borderRadius:99,background:color.bg,width:total?`${(done/total)*100}%`:"0%",transition:"width 0.4s"}}/></div>
-                    <span style={{color:th.text5,fontSize:11}}>{cat.type==="personal"?`${pend.length} pendientes`:`${done}/${total} hechas`}</span>
+                    <div style={{height:3,background:th.border2,borderRadius:99,marginBottom:6}}><div style={{height:3,borderRadius:99,background:color.bg,width:`${pct}%`,transition:"width 0.4s"}}/></div>
+                    <span style={{color:th.text5,fontSize:11}}>{progress}</span>
                   </div>
                 );})}
               </div>
