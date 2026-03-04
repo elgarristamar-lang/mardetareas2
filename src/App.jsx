@@ -588,7 +588,7 @@ function TasksCalendarView({cats,th,dark,onNavigate,personalOnly=false}){
   const tasksByDate={};
   const sourceCats=personalOnly
     ?cats.filter(c=>c.type==="personal")
-    :cats.filter(c=>c.type!=="personal");
+    :cats.filter(c=>c.type==="tasks"); // only regular task categories, NOT meetings
 
   sourceCats.forEach(cat=>{
     const color=gc(COLORS[cat.colorIdx],dark);
@@ -598,16 +598,18 @@ function TasksCalendarView({cats,th,dark,onNavigate,personalOnly=false}){
     });
   });
 
-  // Collect checklist items with deadlines from meeting categories
-  cats.filter(c=>c.type==="meeting"||c.type==="meeting121eq").forEach(cat=>{
-    const color=gc(COLORS[cat.colorIdx],dark);
-    cat.tasks.filter(m=>!m.done).forEach(m=>{
-      (m.checklist||[]).filter(i=>i.deadline&&i.state!=="Completada").forEach(i=>{
-        if(!tasksByDate[i.deadline])tasksByDate[i.deadline]=[];
-        tasksByDate[i.deadline].push({id:i.id,text:i.text,catName:cat.name,catIcon:cat.icon,catId:cat.id,catColor:color,isMeeting:false,priority:"media",meetingId:m.meetingId,collaborator:m.collaborator});
+  // For non-personal view: add checklist items with deadlines from meeting categories
+  if(!personalOnly){
+    cats.filter(c=>c.type==="meeting"||c.type==="meeting121eq").forEach(cat=>{
+      const color=gc(COLORS[cat.colorIdx],dark);
+      cat.tasks.filter(m=>!m.done).forEach(m=>{
+        (m.checklist||[]).filter(i=>i.deadline&&i.state!=="Completada").forEach(i=>{
+          if(!tasksByDate[i.deadline])tasksByDate[i.deadline]=[];
+          tasksByDate[i.deadline].push({id:i.id,text:i.text,catName:cat.name,catIcon:cat.icon,catId:cat.id,catColor:color,priority:"media",meetingId:m.meetingId});
+        });
       });
     });
-  });
+  }
 
   const calRow=CAL_DATA.find(r=>weekDates.includes(r.date));
   const semanaLabel=calRow?.semana||`Semana del ${fmtShort(weekStart)}`;
@@ -657,10 +659,11 @@ function TasksCalendarView({cats,th,dark,onNavigate,personalOnly=false}){
                 <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:2}}>
                   <span style={{fontSize:11}}>{t.catIcon}</span>
                   <span style={{fontSize:10,color:t.catColor.tc,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.catName}</span>
-                  {t.isMeeting&&<span style={{fontSize:9,color:t.catColor.tc,background:t.catColor.accent+"33",padding:"0 4px",borderRadius:3,flexShrink:0}}>reunión</span>}
                 </div>
-                <div style={{fontSize:11.5,color:th.text2,lineHeight:1.3,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{t.text}</div>
-                {!t.isMeeting&&t.priority&&<span style={{fontSize:9}}>{PRIORITY[t.priority]?.dot}</span>}
+                <div style={{display:"flex",alignItems:"flex-start",gap:4}}>
+                  {t.priority&&<span style={{fontSize:9,marginTop:2,flexShrink:0}}>{PRIORITY[t.priority]?.dot}</span>}
+                  <div style={{fontSize:11.5,color:th.text2,lineHeight:1.3,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{t.text}</div>
+                </div>
               </div>))
             )}
           </div>
