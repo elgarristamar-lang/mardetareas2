@@ -397,7 +397,7 @@ function CalendarView({th,dark,calData,onCalDataUpdate}){
           const month=MES_MAP[mes];if(!month||!num)return;
           try{
             const d=new Date(2026,month-1,parseInt(num));
-            const iso=d.toISOString().split("T")[0];
+            const iso=localISO(d);
             const entry={date:iso,semana:currentSemana,dia:row[1],mes};
             MEMBERS_COL.forEach((m,i)=>{entry[m]=String(row[4+i]||"").trim().toUpperCase();});
             parsed.push(entry);
