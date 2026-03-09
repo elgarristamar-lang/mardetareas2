@@ -990,6 +990,7 @@ function TaskRow({task,color,th,onToggle,onDelete,onUpdate,showInPersonal=false,
     <div style={{display:"flex",alignItems:"center",gap:10,padding:"11px 13px",cursor:task.done?"default":"pointer"}} onClick={()=>!task.done&&!editT&&setExp(e=>!e)}>
       <div onClick={e=>{e.stopPropagation();onToggle();}} style={{width:19,height:19,borderRadius:99,flexShrink:0,cursor:"pointer",border:task.done?"none":`2px solid ${color.accent}`,background:task.done?color.accent:"transparent",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,color:"#fff",transition:"all 0.2s"}}>{task.done&&"✓"}</div>
       <span style={{fontSize:10,flexShrink:0}}>{p.dot}</span>
+      {!editT&&!task.done&&(()=>{const tk=TASK_KIND[task.taskKind||"tarea"];return(<span style={{fontSize:10,padding:"2px 7px",borderRadius:99,fontWeight:700,flexShrink:0,background:tk.bg,color:tk.color,border:`1px solid ${tk.color}44`,whiteSpace:"nowrap"}}>{tk.icon} {tk.label}</span>);})()}
       {editT&&!task.done?(<input autoFocus value={task.text} onChange={e=>onUpdate({text:e.target.value})} onBlur={()=>setEditT(false)} onKeyDown={e=>{if(e.key==="Enter"||e.key==="Escape")setEditT(false);}} onClick={e=>e.stopPropagation()} style={{flex:1,...inp(th,{border:`1px solid ${color.accent}66`,fontSize:13.5,padding:"2px 8px"})}}/>):(
         <span onDoubleClick={e=>{e.stopPropagation();if(!task.done)setEditT(true);}} style={{flex:1,fontSize:13.5,color:task.done?th.text4:th.text2,textDecoration:task.done?"line-through":"none",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{task.text}</span>
       )}
@@ -1015,7 +1016,7 @@ function TaskRow({task,color,th,onToggle,onDelete,onUpdate,showInPersonal=false,
     )}
     {exp&&!task.done&&(<div style={{borderTop:`1px solid ${th.border2}`,padding:14}}>
       <div style={{display:"flex",gap:12,flexWrap:"wrap",marginBottom:14}}>
-        <div style={{flex:1,minWidth:140}}><SL th={th}>Prioridad</SL><div style={{display:"flex",gap:5}}>{Object.entries(TASK_KIND).map(([k,v])=>(<button key={k} onClick={()=>onUpdate({taskKind:k})} style={{padding:"3px 10px",borderRadius:99,fontSize:11,cursor:"pointer",fontWeight:task.taskKind===k?700:400,background:task.taskKind===k?v.bg:"transparent",color:task.taskKind===k?v.color:th.text5,border:`1px solid ${task.taskKind===k?v.color+"66":"transparent"}`}}>{v.label}</button>))}
+        <div style={{flex:1,minWidth:140}}><SL th={th}>Tipo</SL><div style={{display:"flex",gap:5,flexWrap:"wrap"}}>{Object.entries(TASK_KIND).map(([k,v])=>(<button key={k} onClick={()=>onUpdate({taskKind:k})} style={{padding:"3px 10px",borderRadius:99,fontSize:11,cursor:"pointer",fontWeight:task.taskKind===k?700:400,background:task.taskKind===k?v.bg:"transparent",color:task.taskKind===k?v.color:th.text5,border:`1px solid ${task.taskKind===k?v.color+"66":"transparent"}`}}>{v.icon} {v.label}</button>))}
             <span style={{color:th.border,margin:"0 4px"}}>|</span>
             {Object.entries(PRIORITY).map(([k])=>(<button key={k} onClick={()=>onUpdate({priority:k})} style={{padding:"3px 10px",borderRadius:99,fontSize:11.5,cursor:"pointer",...ps(k,task.priority===k,dark)}}>{PRIORITY[k].label}</button>))}</div></div>
         <div style={{flex:1,minWidth:150}}><SL th={th}>Deadline</SL>
@@ -2188,6 +2189,7 @@ export default function App(){
   const [projTo,setProjTo]=useState("");
   const [searchQ,setSearchQ]=useState("");
   const [filterProj,setFilterProj]=useState("");
+  const [filterKind,setFilterKind]=useState("");
   const [labelBank,setLabelBankRaw]=useState(()=>{
     try{const v=localStorage.getItem("mdt_labels");return v?JSON.parse(v):[];}catch{return[];}
   });
@@ -2388,21 +2390,28 @@ export default function App(){
                       <option key={p} value={p}>{p}</option>
                     ))}
                   </select>
-                  {(searchQ||filterProj)&&<button onClick={()=>{setSearchQ("");setFilterProj("");}}
+                  <select value={filterKind} onChange={e=>setFilterKind(e.target.value)}
+                    style={{...inp(th,{fontSize:12,minWidth:130,cursor:"pointer",height:34,flex:"0 0 auto"})}}>
+                    <option value="">Todos los tipos</option>
+                    {Object.entries(TASK_KIND).map(([k,v])=>(<option key={k} value={k}>{v.icon} {v.label}</option>))}
+                  </select>
+                  {(searchQ||filterProj||filterKind)&&<button onClick={()=>{setSearchQ("");setFilterProj("");setFilterKind("");}}
                     style={{padding:"0 12px",height:34,borderRadius:7,background:th.border,border:"none",color:th.text4,fontSize:11,cursor:"pointer",flexShrink:0}}>✕ Limpiar</button>}
                 </div>
               </div>
-              {(searchQ||filterProj)?(()=>{
+              {(searchQ||filterProj||filterKind)?(()=>{
                 const q=searchQ.toLowerCase();
                 const matched=allTasks.filter(t=>{
                   const textMatch=!q||(t.text||"").toLowerCase().includes(q)||(t.description||"").toLowerCase().includes(q);
                   const projMatch=!filterProj||(t.labels||[]).some(l=>l.text===filterProj);
-                  return textMatch&&projMatch&&!t.done;
+                  const kindMatch=!filterKind||(t.taskKind||"tarea")===filterKind;
+                  return textMatch&&projMatch&&kindMatch&&!t.done;
                 });
                 const matchedDone=allTasks.filter(t=>{
                   const textMatch=!q||(t.text||"").toLowerCase().includes(q)||(t.description||"").toLowerCase().includes(q);
                   const projMatch=!filterProj||(t.labels||[]).some(l=>l.text===filterProj);
-                  return textMatch&&projMatch&&t.done;
+                  const kindMatch=!filterKind||(t.taskKind||"tarea")===filterKind;
+                  return textMatch&&projMatch&&kindMatch&&t.done;
                 });
                 if(matched.length===0&&matchedDone.length===0)return<div style={{padding:"40px 20px",textAlign:"center",color:th.text5,fontSize:13}}>No se encontraron tareas</div>;
                 return(<div>
