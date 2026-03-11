@@ -1,8 +1,8 @@
-// --version1.11
+// --version1.12
 import { useState, useEffect, useRef } from "react";
 
 
-const BUILD_TIME="2026-03-11T10:00:00Z";
+const BUILD_TIME="2026-03-11T11:30:00Z";
 
 // ── Calendar data (embedded from Excel) ───────────────────────
 const CAL_DATA=[{"date":"2026-01-29","semana":"SEMANA 1","dia":"LUNES","mes":"ENERO","IVAN":"P","MAR":"TT (17H.)","SHANE":"TT","PABLO":"P","PAU":"TT"},{"date":"2026-01-30","semana":"SEMANA 1","dia":"MARTES","mes":"ENERO","IVAN":"V","MAR":"P","SHANE":"P","PABLO":"P","PAU":"PARTIDO."},{"date":"2026-01-31","semana":"SEMANA 1","dia":"MIÉRCOLES","mes":"ENERO","IVAN":"TT","MAR":"TT","SHANE":"PD","PABLO":"TT","PAU":"P"},{"date":"2026-01-01","semana":"SEMANA 1","dia":"JUEVES","mes":"ENERO","IVAN":"F","MAR":"F","SHANE":"F","PABLO":"F","PAU":"F"},{"date":"2026-01-02","semana":"SEMANA 1","dia":"VIERNES","mes":"ENERO","IVAN":"TT","MAR":"V","SHANE":"P","PABLO":"V","PAU":"V"},{"date":"2026-01-05","semana":"SEMANA 2","dia":"LUNES","mes":"ENERO","IVAN":"P","MAR":"TT (17H.)","SHANE":"P","PABLO":"V","PAU":"TT"},{"date":"2026-01-06","semana":"SEMANA 2","dia":"MARTES","mes":"ENERO","IVAN":"F","MAR":"F","SHANE":"F","PABLO":"F","PAU":"F"},{"date":"2026-01-07","semana":"SEMANA 2","dia":"MIÉRCOLES","mes":"ENERO","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"TT","PABLO":"P","PAU":"V"},{"date":"2026-01-08","semana":"SEMANA 2","dia":"JUEVES","mes":"ENERO","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"TT","PAU":"V"},{"date":"2026-01-09","semana":"SEMANA 2","dia":"VIERNES","mes":"ENERO","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"P","PAU":"V"},{"date":"2026-01-12","semana":"SEMANA 3","dia":"LUNES","mes":"ENERO","IVAN":"P","MAR":"TT (17H.)","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-01-13","semana":"SEMANA 3","dia":"MARTES","mes":"ENERO","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-01-14","semana":"SEMANA 3","dia":"MIÉRCOLES","mes":"ENERO","IVAN":"PARTIDO.","MAR":"V","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-01-15","semana":"SEMANA 3","dia":"JUEVES","mes":"ENERO","IVAN":"P","MAR":"PARTIDO.","SHANE":"PARTIDO.","PABLO":"TT","PAU":"P"},{"date":"2026-01-16","semana":"SEMANA 3","dia":"VIERNES","mes":"ENERO","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"P","PAU":"TT"},{"date":"2026-01-19","semana":"SEMANA 4","dia":"LUNES","mes":"ENERO","IVAN":"P","MAR":"TT (17H.)","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-01-20","semana":"SEMANA 4","dia":"MARTES","mes":"ENERO","IVAN":"TT","MAR":"PARTIDO.","SHANE":"TT","PABLO":"P","PAU":"PARTIDO."},{"date":"2026-01-21","semana":"SEMANA 4","dia":"MIÉRCOLES","mes":"ENERO","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"V","PABLO":"TT","PAU":"P"},{"date":"2026-01-22","semana":"SEMANA 4","dia":"JUEVES","mes":"ENERO","IVAN":"P","MAR":"TT (17H.)","SHANE":"V","PABLO":"P","PAU":"P"},{"date":"2026-01-23","semana":"SEMANA 4","dia":"VIERNES","mes":"ENERO","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"P","PAU":"V"},{"date":"2026-01-26","semana":"SEMANA 5","dia":"LUNES","mes":"ENERO","IVAN":"P","MAR":"TT (17H.)","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-01-27","semana":"SEMANA 5","dia":"MARTES","mes":"ENERO","IVAN":"TT","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"PARTIDO."},{"date":"2026-01-28","semana":"SEMANA 5","dia":"MIÉRCOLES","mes":"ENERO","IVAN":"PARTIDO.","MAR":"V","SHANE":"TT","PABLO":"TT","PAU":"P"},{"date":"2026-01-29","semana":"SEMANA 5","dia":"JUEVES","mes":"ENERO","IVAN":"P","MAR":"PARTIDO.","SHANE":"PARTIDO.","PABLO":"P","PAU":"P"},{"date":"2026-01-30","semana":"SEMANA 5","dia":"VIERNES","mes":"ENERO","IVAN":"V","MAR":"P","SHANE":"P","PABLO":"P","PAU":"TT"},{"date":"2026-02-02","semana":"SEMANA 6","dia":"LUNES","mes":"FEBRERO","IVAN":"P","MAR":"TT (17H.)","SHANE":"V","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-02-03","semana":"SEMANA 6","dia":"MARTES","mes":"FEBRERO","IVAN":"TT","MAR":"PARTIDO.","SHANE":"TT","PABLO":"P","PAU":"PARTIDO."},{"date":"2026-02-04","semana":"SEMANA 6","dia":"MIÉRCOLES","mes":"FEBRERO","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-02-05","semana":"SEMANA 6","dia":"JUEVES","mes":"FEBRERO","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"P","PAU":"P"},{"date":"2026-02-06","semana":"SEMANA 6","dia":"VIERNES","mes":"FEBRERO","IVAN":"TT","MAR":"P","SHANE":"P","PABLO":"P","PAU":"V"},{"date":"2026-02-09","semana":"SEMANA 7","dia":"LUNES","mes":"FEBRERO","IVAN":"TT","MAR":"TT (17H.)","SHANE":"PD","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-02-10","semana":"SEMANA 7","dia":"MARTES","mes":"FEBRERO","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-02-11","semana":"SEMANA 7","dia":"MIÉRCOLES","mes":"FEBRERO","IVAN":"PARTIDO.","MAR":"V","SHANE":"TT","PABLO":"P","PAU":"P"},{"date":"2026-02-12","semana":"SEMANA 7","dia":"JUEVES","mes":"FEBRERO","IVAN":"TT","MAR":"PARTIDO.","SHANE":"TT","PABLO":"TT","PAU":"TT"},{"date":"2026-02-13","semana":"SEMANA 7","dia":"VIERNES","mes":"FEBRERO","IVAN":"P","MAR":"TT","SHANE":"TT","PABLO":"P","PAU":"TT"},{"date":"2026-02-16","semana":"SEMANA 8","dia":"LUNES","mes":"FEBRERO","IVAN":"P","MAR":"TT (17H.)","SHANE":"V","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-02-17","semana":"SEMANA 8","dia":"MARTES","mes":"FEBRERO","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"TT","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-02-18","semana":"SEMANA 8","dia":"MIÉRCOLES","mes":"FEBRERO","IVAN":"TT","MAR":"P","SHANE":"PARTIDO.","PABLO":"P","PAU":"P"},{"date":"2026-02-19","semana":"SEMANA 8","dia":"JUEVES","mes":"FEBRERO","IVAN":"P","MAR":"TT (17H.)","SHANE":"TT","PABLO":"P","PAU":"P"},{"date":"2026-02-20","semana":"SEMANA 8","dia":"VIERNES","mes":"FEBRERO","IVAN":"TT","MAR":"P","SHANE":"P","PABLO":"P","PAU":"V"},{"date":"2026-02-23","semana":"SEMANA 9","dia":"LUNES","mes":"FEBRERO","IVAN":"P","MAR":"TT (17H.)","SHANE":"V","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-02-24","semana":"SEMANA 9","dia":"MARTES","mes":"FEBRERO","IVAN":"P","MAR":"PARTIDO.","SHANE":"V","PABLO":"P","PAU":"PARTIDO."},{"date":"2026-02-25","semana":"SEMANA 9","dia":"MIÉRCOLES","mes":"FEBRERO","IVAN":"PARTIDO.","MAR":"V","SHANE":"P","PABLO":"TT","PAU":"P"},{"date":"2026-02-26","semana":"SEMANA 9","dia":"JUEVES","mes":"FEBRERO","IVAN":"P","MAR":"P","SHANE":"PARTIDO.","PABLO":"PARTIDO.","PAU":"P"},{"date":"2026-02-27","semana":"SEMANA 9","dia":"VIERNES","mes":"FEBRERO","IVAN":"TT","MAR":"P","SHANE":"P","PABLO":"TT","PAU":"TT"},{"date":"2026-03-02","semana":"SEMANA 10","dia":"LUNES","mes":"MARZO","IVAN":"TT","MAR":"PARTIDO.","SHANE":"PARTIDO.","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-03-03","semana":"SEMANA 10","dia":"MARTES","mes":"MARZO","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"TT","PAU":"P"},{"date":"2026-03-04","semana":"SEMANA 10","dia":"MIÉRCOLES","mes":"MARZO","IVAN":"PARTIDO.","MAR":"V","SHANE":"TT","PABLO":"TT","PAU":"TT"},{"date":"2026-03-05","semana":"SEMANA 10","dia":"JUEVES","mes":"MARZO","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"TT","PAU":"P"},{"date":"2026-03-06","semana":"SEMANA 10","dia":"VIERNES","mes":"MARZO","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"P","PAU":"V"},{"date":"2026-03-09","semana":"SEMANA 11","dia":"LUNES","mes":"MARZO","IVAN":"P","MAR":"TT (17H.)","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-03-10","semana":"SEMANA 11","dia":"MARTES","mes":"MARZO","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-03-11","semana":"SEMANA 11","dia":"MIÉRCOLES","mes":"MARZO","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-03-12","semana":"SEMANA 11","dia":"JUEVES","mes":"MARZO","IVAN":"P","MAR":"TT (17H.)","SHANE":"P","PABLO":"PARTIDO.","PAU":"P"},{"date":"2026-03-13","semana":"SEMANA 11","dia":"VIERNES","mes":"MARZO","IVAN":"TT","MAR":"PARTIDO.","SHANE":"TT","PABLO":"P","PAU":"TT"},{"date":"2026-03-16","semana":"SEMANA 12","dia":"LUNES","mes":"MARZO","IVAN":"P","MAR":"TT (17H.)","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-03-17","semana":"SEMANA 12","dia":"MARTES","mes":"MARZO","IVAN":"TT","MAR":"PARTIDO.","SHANE":"TT","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-03-18","semana":"SEMANA 12","dia":"MIÉRCOLES","mes":"MARZO","IVAN":"PARTIDO.","MAR":"V","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-03-19","semana":"SEMANA 12","dia":"JUEVES","mes":"MARZO","IVAN":"P","MAR":"PARTIDO.","SHANE":"PARTIDO.","PABLO":"TT","PAU":"P"},{"date":"2026-03-20","semana":"SEMANA 12","dia":"VIERNES","mes":"MARZO","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"P","PAU":"V"},{"date":"2026-03-23","semana":"SEMANA 13","dia":"LUNES","mes":"MARZO","IVAN":"P","MAR":"TT (17H.)","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-03-24","semana":"SEMANA 13","dia":"MARTES","mes":"MARZO","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-03-25","semana":"SEMANA 13","dia":"MIÉRCOLES","mes":"MARZO","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-03-26","semana":"SEMANA 13","dia":"JUEVES","mes":"MARZO","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"P","PAU":"P"},{"date":"2026-03-27","semana":"SEMANA 13","dia":"VIERNES","mes":"MARZO","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"P","PAU":"TT"},{"date":"2026-03-30","semana":"SEMANA 14","dia":"LUNES","mes":"MARZO","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"V","PAU":"TT"},{"date":"2026-03-31","semana":"SEMANA 14","dia":"MARTES","mes":"MARZO","IVAN":"TT","MAR":"PARTIDO.","SHANE":"TT","PABLO":"V","PAU":"PARTIDO."},{"date":"2026-04-01","semana":"SEMANA 14","dia":"MIÉRCOLES","mes":"ABRIL","IVAN":"PARTIDO.","MAR":"TT (17H.)","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-04-02","semana":"SEMANA 14","dia":"JUEVES","mes":"ABRIL","IVAN":"P","MAR":"PARTIDO.","SHANE":"PARTIDO.","PABLO":"TT","PAU":"P"},{"date":"2026-04-03","semana":"SEMANA 14","dia":"VIERNES","mes":"ABRIL","IVAN":"F","MAR":"F","SHANE":"F","PABLO":"F","PAU":"F"},{"date":"2026-04-06","semana":"SEMANA 15","dia":"LUNES","mes":"ABRIL","IVAN":"F","MAR":"F","SHANE":"F","PABLO":"F","PAU":"F"},{"date":"2026-04-07","semana":"SEMANA 15","dia":"MARTES","mes":"ABRIL","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-04-08","semana":"SEMANA 15","dia":"MIÉRCOLES","mes":"ABRIL","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-04-09","semana":"SEMANA 15","dia":"JUEVES","mes":"ABRIL","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"P","PAU":"P"},{"date":"2026-04-10","semana":"SEMANA 15","dia":"VIERNES","mes":"ABRIL","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"P","PAU":"TT"},{"date":"2026-04-13","semana":"SEMANA 16","dia":"LUNES","mes":"ABRIL","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-04-14","semana":"SEMANA 16","dia":"MARTES","mes":"ABRIL","IVAN":"TT","MAR":"PARTIDO.","SHANE":"TT","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-04-15","semana":"SEMANA 16","dia":"MIÉRCOLES","mes":"ABRIL","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-04-16","semana":"SEMANA 16","dia":"JUEVES","mes":"ABRIL","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"TT","PAU":"P"},{"date":"2026-04-17","semana":"SEMANA 16","dia":"VIERNES","mes":"ABRIL","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"P","PAU":"P"},{"date":"2026-04-20","semana":"SEMANA 17","dia":"LUNES","mes":"ABRIL","IVAN":"P","MAR":"TT (17H.)","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-04-21","semana":"SEMANA 17","dia":"MARTES","mes":"ABRIL","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-04-22","semana":"SEMANA 17","dia":"MIÉRCOLES","mes":"ABRIL","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-04-23","semana":"SEMANA 17","dia":"JUEVES","mes":"ABRIL","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"P","PAU":"P"},{"date":"2026-04-24","semana":"SEMANA 17","dia":"VIERNES","mes":"ABRIL","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"P","PAU":"TT"},{"date":"2026-04-27","semana":"SEMANA 18","dia":"LUNES","mes":"ABRIL","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-04-28","semana":"SEMANA 18","dia":"MARTES","mes":"ABRIL","IVAN":"TT","MAR":"PARTIDO.","SHANE":"TT","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-04-29","semana":"SEMANA 18","dia":"MIÉRCOLES","mes":"ABRIL","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-04-30","semana":"SEMANA 18","dia":"JUEVES","mes":"ABRIL","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"TT","PAU":"P"},{"date":"2026-05-01","semana":"SEMANA 18","dia":"VIERNES","mes":"MAYO","IVAN":"F","MAR":"F","SHANE":"F","PABLO":"F","PAU":"F"},{"date":"2026-05-04","semana":"SEMANA 19","dia":"LUNES","mes":"MAYO","IVAN":"P","MAR":"TT (17H.)","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-05-05","semana":"SEMANA 19","dia":"MARTES","mes":"MAYO","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-05-06","semana":"SEMANA 19","dia":"MIÉRCOLES","mes":"MAYO","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-05-07","semana":"SEMANA 19","dia":"JUEVES","mes":"MAYO","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"P","PAU":"P"},{"date":"2026-05-08","semana":"SEMANA 19","dia":"VIERNES","mes":"MAYO","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"P","PAU":"TT"},{"date":"2026-05-11","semana":"SEMANA 20","dia":"LUNES","mes":"MAYO","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-05-12","semana":"SEMANA 20","dia":"MARTES","mes":"MAYO","IVAN":"TT","MAR":"PARTIDO.","SHANE":"TT","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-05-13","semana":"SEMANA 20","dia":"MIÉRCOLES","mes":"MAYO","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-05-14","semana":"SEMANA 20","dia":"JUEVES","mes":"MAYO","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"TT","PAU":"P"},{"date":"2026-05-15","semana":"SEMANA 20","dia":"VIERNES","mes":"MAYO","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"V","PAU":"P"},{"date":"2026-05-18","semana":"SEMANA 21","dia":"LUNES","mes":"MAYO","IVAN":"P","MAR":"TT (17H.)","SHANE":"P","PABLO":"V","PAU":"TT"},{"date":"2026-05-19","semana":"SEMANA 21","dia":"MARTES","mes":"MAYO","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"V","PAU":"PARTIDO."},{"date":"2026-05-20","semana":"SEMANA 21","dia":"MIÉRCOLES","mes":"MAYO","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"V","PAU":"P"},{"date":"2026-05-21","semana":"SEMANA 21","dia":"JUEVES","mes":"MAYO","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"P","PAU":"P"},{"date":"2026-05-22","semana":"SEMANA 21","dia":"VIERNES","mes":"MAYO","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"P","PAU":"TT"},{"date":"2026-05-25","semana":"SEMANA 22","dia":"LUNES","mes":"MAYO","IVAN":"F","MAR":"F","SHANE":"F","PABLO":"F","PAU":"F"},{"date":"2026-05-26","semana":"SEMANA 22","dia":"MARTES","mes":"MAYO","IVAN":"TT","MAR":"PARTIDO.","SHANE":"TT","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-05-27","semana":"SEMANA 22","dia":"MIÉRCOLES","mes":"MAYO","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-05-28","semana":"SEMANA 22","dia":"JUEVES","mes":"MAYO","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"TT","PAU":"P"},{"date":"2026-05-29","semana":"SEMANA 22","dia":"VIERNES","mes":"MAYO","IVAN":"V","MAR":"P","SHANE":"TT","PABLO":"P","PAU":"P"},{"date":"2026-06-01","semana":"SEMANA 23","dia":"LUNES","mes":"JUNIO","IVAN":"V","MAR":"TT (17H.)","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-06-02","semana":"SEMANA 23","dia":"MARTES","mes":"JUNIO","IVAN":"V","MAR":"PARTIDO.","SHANE":"P","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-06-03","semana":"SEMANA 23","dia":"MIÉRCOLES","mes":"JUNIO","IVAN":"V","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-06-04","semana":"SEMANA 23","dia":"JUEVES","mes":"JUNIO","IVAN":"V","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"P","PAU":"P"},{"date":"2026-06-05","semana":"SEMANA 23","dia":"VIERNES","mes":"JUNIO","IVAN":"V","MAR":"P","SHANE":"TT","PABLO":"P","PAU":"TT"},{"date":"2026-06-08","semana":"SEMANA 24","dia":"LUNES","mes":"JUNIO","IVAN":"V","MAR":"PARTIDO.","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-06-09","semana":"SEMANA 24","dia":"MARTES","mes":"JUNIO","IVAN":"V","MAR":"PARTIDO.","SHANE":"TT","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-06-10","semana":"SEMANA 24","dia":"MIÉRCOLES","mes":"JUNIO","IVAN":"V","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-06-11","semana":"SEMANA 24","dia":"JUEVES","mes":"JUNIO","IVAN":"V","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"TT","PAU":"P"},{"date":"2026-06-12","semana":"SEMANA 24","dia":"VIERNES","mes":"JUNIO","IVAN":"V","MAR":"P","SHANE":"TT","PABLO":"P","PAU":"P"},{"date":"2026-06-15","semana":"SEMANA 25","dia":"LUNES","mes":"JUNIO","IVAN":"P","MAR":"TT (17H.)","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-06-16","semana":"SEMANA 25","dia":"MARTES","mes":"JUNIO","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-06-17","semana":"SEMANA 25","dia":"MIÉRCOLES","mes":"JUNIO","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-06-18","semana":"SEMANA 25","dia":"JUEVES","mes":"JUNIO","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"P","PAU":"P"},{"date":"2026-06-19","semana":"SEMANA 25","dia":"VIERNES","mes":"JUNIO","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"P","PAU":"TT"},{"date":"2026-06-22","semana":"SEMANA 26","dia":"LUNES","mes":"JUNIO","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-06-23","semana":"SEMANA 26","dia":"MARTES","mes":"JUNIO","IVAN":"TT","MAR":"PARTIDO.","SHANE":"TT","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-06-24","semana":"SEMANA 26","dia":"MIÉRCOLES","mes":"JUNIO","IVAN":"F","MAR":"F","SHANE":"F","PABLO":"F","PAU":"F"},{"date":"2026-06-25","semana":"SEMANA 26","dia":"JUEVES","mes":"JUNIO","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"TT","PAU":"P"},{"date":"2026-06-26","semana":"SEMANA 26","dia":"VIERNES","mes":"JUNIO","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"P","PAU":"P"},{"date":"2026-06-29","semana":"SEMANA 27","dia":"LUNES","mes":"JUNIO","IVAN":"P","MAR":"TT (17H.)","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-06-30","semana":"SEMANA 27","dia":"MARTES","mes":"JUNIO","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-07-01","semana":"SEMANA 27","dia":"MIÉRCOLES","mes":"JULIO","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-07-02","semana":"SEMANA 27","dia":"JUEVES","mes":"JULIO","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"P","PAU":"P"},{"date":"2026-07-03","semana":"SEMANA 27","dia":"VIERNES","mes":"JULIO","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"P","PAU":"TT"},{"date":"2026-07-06","semana":"SEMANA 28","dia":"LUNES","mes":"JULIO","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-07-07","semana":"SEMANA 28","dia":"MARTES","mes":"JULIO","IVAN":"TT","MAR":"PARTIDO.","SHANE":"TT","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-07-08","semana":"SEMANA 28","dia":"MIÉRCOLES","mes":"JULIO","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-07-09","semana":"SEMANA 28","dia":"JUEVES","mes":"JULIO","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"TT","PAU":"P"},{"date":"2026-07-10","semana":"SEMANA 28","dia":"VIERNES","mes":"JULIO","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"P","PAU":"P"},{"date":"2026-07-13","semana":"SEMANA 29","dia":"LUNES","mes":"JULIO","IVAN":"P","MAR":"TT (17H.)","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-07-14","semana":"SEMANA 29","dia":"MARTES","mes":"JULIO","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-07-15","semana":"SEMANA 29","dia":"MIÉRCOLES","mes":"JULIO","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-07-16","semana":"SEMANA 29","dia":"JUEVES","mes":"JULIO","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"P","PAU":"P"},{"date":"2026-07-17","semana":"SEMANA 29","dia":"VIERNES","mes":"JULIO","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"P","PAU":"TT"},{"date":"2026-07-20","semana":"SEMANA 30","dia":"LUNES","mes":"JULIO","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-07-21","semana":"SEMANA 30","dia":"MARTES","mes":"JULIO","IVAN":"TT","MAR":"PARTIDO.","SHANE":"TT","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-07-22","semana":"SEMANA 30","dia":"MIÉRCOLES","mes":"JULIO","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-07-23","semana":"SEMANA 30","dia":"JUEVES","mes":"JULIO","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"TT","PAU":"P"},{"date":"2026-07-24","semana":"SEMANA 30","dia":"VIERNES","mes":"JULIO","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"P","PAU":"P"},{"date":"2026-07-27","semana":"SEMANA 31","dia":"LUNES","mes":"JULIO","IVAN":"P","MAR":"TT (17H.)","SHANE":"P","PABLO":"V","PAU":"TT"},{"date":"2026-07-28","semana":"SEMANA 31","dia":"MARTES","mes":"JULIO","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"V","PAU":"PARTIDO."},{"date":"2026-07-29","semana":"SEMANA 31","dia":"MIÉRCOLES","mes":"JULIO","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"V","PAU":"P"},{"date":"2026-07-30","semana":"SEMANA 31","dia":"JUEVES","mes":"JULIO","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"V","PAU":"P"},{"date":"2026-07-31","semana":"SEMANA 31","dia":"VIERNES","mes":"JULIO","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"V","PAU":"TT"},{"date":"2026-08-03","semana":"SEMANA 32","dia":"LUNES","mes":"AGOSTO","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"V","PAU":"TT"},{"date":"2026-08-04","semana":"SEMANA 32","dia":"MARTES","mes":"AGOSTO","IVAN":"TT","MAR":"PARTIDO.","SHANE":"TT","PABLO":"V","PAU":"PARTIDO."},{"date":"2026-08-05","semana":"SEMANA 32","dia":"MIÉRCOLES","mes":"AGOSTO","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"V","PAU":"P"},{"date":"2026-08-06","semana":"SEMANA 32","dia":"JUEVES","mes":"AGOSTO","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"V","PAU":"P"},{"date":"2026-08-07","semana":"SEMANA 32","dia":"VIERNES","mes":"AGOSTO","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"V","PAU":"P"},{"date":"2026-08-10","semana":"SEMANA 33","dia":"LUNES","mes":"AGOSTO","IVAN":"P","MAR":"TT (17H.)","SHANE":"P","PABLO":"V","PAU":"TT"},{"date":"2026-08-11","semana":"SEMANA 33","dia":"MARTES","mes":"AGOSTO","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"V","PAU":"PARTIDO."},{"date":"2026-08-12","semana":"SEMANA 33","dia":"MIÉRCOLES","mes":"AGOSTO","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"V","PAU":"P"},{"date":"2026-08-13","semana":"SEMANA 33","dia":"JUEVES","mes":"AGOSTO","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"V","PAU":"P"},{"date":"2026-08-14","semana":"SEMANA 33","dia":"VIERNES","mes":"AGOSTO","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"V","PAU":"TT"},{"date":"2026-08-17","semana":"SEMANA 34","dia":"LUNES","mes":"AGOSTO","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-08-18","semana":"SEMANA 34","dia":"MARTES","mes":"AGOSTO","IVAN":"TT","MAR":"PARTIDO.","SHANE":"TT","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-08-19","semana":"SEMANA 34","dia":"MIÉRCOLES","mes":"AGOSTO","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-08-20","semana":"SEMANA 34","dia":"JUEVES","mes":"AGOSTO","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"TT","PAU":"P"},{"date":"2026-08-21","semana":"SEMANA 34","dia":"VIERNES","mes":"AGOSTO","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"P","PAU":"P"},{"date":"2026-08-24","semana":"SEMANA 35","dia":"LUNES","mes":"AGOSTO","IVAN":"P","MAR":"TT (17H.)","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-08-25","semana":"SEMANA 35","dia":"MARTES","mes":"AGOSTO","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-08-26","semana":"SEMANA 35","dia":"MIÉRCOLES","mes":"AGOSTO","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-08-27","semana":"SEMANA 35","dia":"JUEVES","mes":"AGOSTO","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"P","PAU":"P"},{"date":"2026-08-28","semana":"SEMANA 35","dia":"VIERNES","mes":"AGOSTO","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"P","PAU":"TT"},{"date":"2026-08-31","semana":"SEMANA 36","dia":"LUNES","mes":"AGOSTO","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-09-01","semana":"SEMANA 36","dia":"MARTES","mes":"SEPTIEMBRE","IVAN":"TT","MAR":"PARTIDO.","SHANE":"TT","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-09-02","semana":"SEMANA 36","dia":"MIÉRCOLES","mes":"SEPTIEMBRE","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-09-03","semana":"SEMANA 36","dia":"JUEVES","mes":"SEPTIEMBRE","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"TT","PAU":"P"},{"date":"2026-09-04","semana":"SEMANA 36","dia":"VIERNES","mes":"SEPTIEMBRE","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"P","PAU":"P"},{"date":"2026-09-07","semana":"SEMANA 37","dia":"LUNES","mes":"SEPTIEMBRE","IVAN":"P","MAR":"TT (17H.)","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-09-08","semana":"SEMANA 37","dia":"MARTES","mes":"SEPTIEMBRE","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-09-09","semana":"SEMANA 37","dia":"MIÉRCOLES","mes":"SEPTIEMBRE","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-09-10","semana":"SEMANA 37","dia":"JUEVES","mes":"SEPTIEMBRE","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"P","PAU":"P"},{"date":"2026-09-11","semana":"SEMANA 37","dia":"VIERNES","mes":"SEPTIEMBRE","IVAN":"F","MAR":"F","SHANE":"F","PABLO":"F","PAU":"F"},{"date":"2026-09-14","semana":"SEMANA 38","dia":"LUNES","mes":"SEPTIEMBRE","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-09-15","semana":"SEMANA 38","dia":"MARTES","mes":"SEPTIEMBRE","IVAN":"TT","MAR":"PARTIDO.","SHANE":"TT","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-09-16","semana":"SEMANA 38","dia":"MIÉRCOLES","mes":"SEPTIEMBRE","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-09-17","semana":"SEMANA 38","dia":"JUEVES","mes":"SEPTIEMBRE","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"TT","PAU":"P"},{"date":"2026-09-18","semana":"SEMANA 38","dia":"VIERNES","mes":"SEPTIEMBRE","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"P","PAU":"P"},{"date":"2026-09-21","semana":"SEMANA 39","dia":"LUNES","mes":"SEPTIEMBRE","IVAN":"P","MAR":"TT (17H.)","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-09-22","semana":"SEMANA 39","dia":"MARTES","mes":"SEPTIEMBRE","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-09-23","semana":"SEMANA 39","dia":"MIÉRCOLES","mes":"SEPTIEMBRE","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-09-24","semana":"SEMANA 39","dia":"JUEVES","mes":"SEPTIEMBRE","IVAN":"F","MAR":"F","SHANE":"F","PABLO":"F","PAU":"F"},{"date":"2026-09-25","semana":"SEMANA 39","dia":"VIERNES","mes":"SEPTIEMBRE","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"P","PAU":"TT"},{"date":"2026-09-28","semana":"SEMANA 40","dia":"LUNES","mes":"SEPTIEMBRE","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-09-29","semana":"SEMANA 40","dia":"MARTES","mes":"SEPTIEMBRE","IVAN":"TT","MAR":"PARTIDO.","SHANE":"TT","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-09-30","semana":"SEMANA 40","dia":"MIÉRCOLES","mes":"SEPTIEMBRE","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-10-01","semana":"SEMANA 40","dia":"JUEVES","mes":"OCTUBRE","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"TT","PAU":"P"},{"date":"2026-10-02","semana":"SEMANA 40","dia":"VIERNES","mes":"OCTUBRE","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"P","PAU":"P"},{"date":"2026-10-05","semana":"SEMANA 41","dia":"LUNES","mes":"OCTUBRE","IVAN":"P","MAR":"TT (17H.)","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-10-06","semana":"SEMANA 41","dia":"MARTES","mes":"OCTUBRE","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-10-07","semana":"SEMANA 41","dia":"MIÉRCOLES","mes":"OCTUBRE","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-10-08","semana":"SEMANA 41","dia":"JUEVES","mes":"OCTUBRE","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"P","PAU":"P"},{"date":"2026-10-09","semana":"SEMANA 41","dia":"VIERNES","mes":"OCTUBRE","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"P","PAU":"TT"},{"date":"2026-10-12","semana":"SEMANA 42","dia":"LUNES","mes":"OCTUBRE","IVAN":"F","MAR":"F","SHANE":"F","PABLO":"F","PAU":"F"},{"date":"2026-10-13","semana":"SEMANA 42","dia":"MARTES","mes":"OCTUBRE","IVAN":"TT","MAR":"PARTIDO.","SHANE":"TT","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-10-14","semana":"SEMANA 42","dia":"MIÉRCOLES","mes":"OCTUBRE","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-10-15","semana":"SEMANA 42","dia":"JUEVES","mes":"OCTUBRE","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"TT","PAU":"P"},{"date":"2026-10-16","semana":"SEMANA 42","dia":"VIERNES","mes":"OCTUBRE","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"P","PAU":"P"},{"date":"2026-10-19","semana":"SEMANA 43","dia":"LUNES","mes":"OCTUBRE","IVAN":"P","MAR":"TT (17H.)","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-10-20","semana":"SEMANA 43","dia":"MARTES","mes":"OCTUBRE","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-10-21","semana":"SEMANA 43","dia":"MIÉRCOLES","mes":"OCTUBRE","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-10-22","semana":"SEMANA 43","dia":"JUEVES","mes":"OCTUBRE","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"P","PAU":"P"},{"date":"2026-10-23","semana":"SEMANA 43","dia":"VIERNES","mes":"OCTUBRE","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"P","PAU":"TT"},{"date":"2026-10-26","semana":"SEMANA 44","dia":"LUNES","mes":"OCTUBRE","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-10-27","semana":"SEMANA 44","dia":"MARTES","mes":"OCTUBRE","IVAN":"TT","MAR":"PARTIDO.","SHANE":"TT","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-10-28","semana":"SEMANA 44","dia":"MIÉRCOLES","mes":"OCTUBRE","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-10-29","semana":"SEMANA 44","dia":"JUEVES","mes":"OCTUBRE","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"TT","PAU":"P"},{"date":"2026-10-30","semana":"SEMANA 44","dia":"VIERNES","mes":"OCTUBRE","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"P","PAU":"P"},{"date":"2026-11-02","semana":"SEMANA 45","dia":"LUNES","mes":"NOVIEMBRE","IVAN":"P","MAR":"TT (17H.)","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-11-03","semana":"SEMANA 45","dia":"MARTES","mes":"NOVIEMBRE","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-11-04","semana":"SEMANA 45","dia":"MIÉRCOLES","mes":"NOVIEMBRE","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-11-05","semana":"SEMANA 45","dia":"JUEVES","mes":"NOVIEMBRE","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"P","PAU":"P"},{"date":"2026-11-06","semana":"SEMANA 45","dia":"VIERNES","mes":"NOVIEMBRE","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"P","PAU":"TT"},{"date":"2026-11-09","semana":"SEMANA 46","dia":"LUNES","mes":"NOVIEMBRE","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-11-10","semana":"SEMANA 46","dia":"MARTES","mes":"NOVIEMBRE","IVAN":"TT","MAR":"PARTIDO.","SHANE":"TT","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-11-11","semana":"SEMANA 46","dia":"MIÉRCOLES","mes":"NOVIEMBRE","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-11-12","semana":"SEMANA 46","dia":"JUEVES","mes":"NOVIEMBRE","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"TT","PAU":"P"},{"date":"2026-11-13","semana":"SEMANA 46","dia":"VIERNES","mes":"NOVIEMBRE","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"P","PAU":"P"},{"date":"2026-11-16","semana":"SEMANA 47","dia":"LUNES","mes":"NOVIEMBRE","IVAN":"P","MAR":"TT (17H.)","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-11-17","semana":"SEMANA 47","dia":"MARTES","mes":"NOVIEMBRE","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-11-18","semana":"SEMANA 47","dia":"MIÉRCOLES","mes":"NOVIEMBRE","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-11-19","semana":"SEMANA 47","dia":"JUEVES","mes":"NOVIEMBRE","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"P","PAU":"P"},{"date":"2026-11-20","semana":"SEMANA 47","dia":"VIERNES","mes":"NOVIEMBRE","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"P","PAU":"TT"},{"date":"2026-11-23","semana":"SEMANA 48","dia":"LUNES","mes":"NOVIEMBRE","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-11-24","semana":"SEMANA 48","dia":"MARTES","mes":"NOVIEMBRE","IVAN":"TT","MAR":"PARTIDO.","SHANE":"TT","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-11-25","semana":"SEMANA 48","dia":"MIÉRCOLES","mes":"NOVIEMBRE","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-11-26","semana":"SEMANA 48","dia":"JUEVES","mes":"NOVIEMBRE","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"TT","PAU":"P"},{"date":"2026-11-27","semana":"SEMANA 48","dia":"VIERNES","mes":"NOVIEMBRE","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"P","PAU":"P"},{"date":"2026-11-30","semana":"SEMANA 49","dia":"LUNES","mes":"NOVIEMBRE","IVAN":"P","MAR":"TT (17H.)","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-12-01","semana":"SEMANA 49","dia":"MARTES","mes":"DICIEMBRE","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-12-02","semana":"SEMANA 49","dia":"MIÉRCOLES","mes":"DICIEMBRE","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-12-03","semana":"SEMANA 49","dia":"JUEVES","mes":"DICIEMBRE","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"P","PAU":"P"},{"date":"2026-12-04","semana":"SEMANA 49","dia":"VIERNES","mes":"DICIEMBRE","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"P","PAU":"TT"},{"date":"2026-12-07","semana":"SEMANA 50","dia":"LUNES","mes":"DICIEMBRE","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-12-08","semana":"SEMANA 50","dia":"MARTES","mes":"DICIEMBRE","IVAN":"F","MAR":"F","SHANE":"F","PABLO":"F","PAU":"F"},{"date":"2026-12-09","semana":"SEMANA 50","dia":"MIÉRCOLES","mes":"DICIEMBRE","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-12-10","semana":"SEMANA 50","dia":"JUEVES","mes":"DICIEMBRE","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"TT","PAU":"P"},{"date":"2026-12-11","semana":"SEMANA 50","dia":"VIERNES","mes":"DICIEMBRE","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"P","PAU":"P"},{"date":"2026-12-14","semana":"SEMANA 51","dia":"LUNES","mes":"DICIEMBRE","IVAN":"P","MAR":"TT (17H.)","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-12-15","semana":"SEMANA 51","dia":"MARTES","mes":"DICIEMBRE","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-12-16","semana":"SEMANA 51","dia":"MIÉRCOLES","mes":"DICIEMBRE","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-12-17","semana":"SEMANA 51","dia":"JUEVES","mes":"DICIEMBRE","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"P","PAU":"P"},{"date":"2026-12-18","semana":"SEMANA 51","dia":"VIERNES","mes":"DICIEMBRE","IVAN":"TT","MAR":"P","SHANE":"TT","PABLO":"P","PAU":"TT"},{"date":"2026-12-21","semana":"SEMANA 52","dia":"LUNES","mes":"DICIEMBRE","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-12-22","semana":"SEMANA 52","dia":"MARTES","mes":"DICIEMBRE","IVAN":"TT","MAR":"PARTIDO.","SHANE":"TT","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-12-23","semana":"SEMANA 52","dia":"MIÉRCOLES","mes":"DICIEMBRE","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-12-24","semana":"SEMANA 52","dia":"JUEVES","mes":"DICIEMBRE","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"TT","PAU":"P"},{"date":"2026-12-25","semana":"SEMANA 52","dia":"VIERNES","mes":"DICIEMBRE","IVAN":"F","MAR":"F","SHANE":"F","PABLO":"F","PAU":"F"},{"date":"2026-12-28","semana":"SEMANA 53","dia":"LUNES","mes":"DICIEMBRE","IVAN":"P","MAR":"TT (17H.)","SHANE":"P","PABLO":"PARTIDO.","PAU":"TT"},{"date":"2026-12-29","semana":"SEMANA 53","dia":"MARTES","mes":"DICIEMBRE","IVAN":"P","MAR":"PARTIDO.","SHANE":"P","PABLO":"TT","PAU":"PARTIDO."},{"date":"2026-12-30","semana":"SEMANA 53","dia":"MIÉRCOLES","mes":"DICIEMBRE","IVAN":"PARTIDO.","MAR":"PARTIDO.","SHANE":"P","PABLO":"P","PAU":"P"},{"date":"2026-12-31","semana":"SEMANA 53","dia":"JUEVES","mes":"DICIEMBRE","IVAN":"P","MAR":"TT (17H.)","SHANE":"PARTIDO.","PABLO":"P","PAU":"P"},{"date":"2026-01-01","semana":"SEMANA 53","dia":"VIERNES","mes":"ENERO","IVAN":"F","MAR":"F","SHANE":"F","PABLO":"F","PAU":"F"}];
@@ -96,7 +96,7 @@ function addDays(dateStr,n){
   return localISO(d);
 }
 
-function mkTask(text){return{id:genId(),text,done:false,taskKind:"tarea",priority:"media",status:"backlog",blockReason:"",createdAt:today(),deadline:null,completedAt:null,jiraUrl:"",description:"",recurrence:null,checklist:[],contacts:[],labels:[],owner:"",assignee:null};}
+function mkTask(text){return{id:genId(),text,done:false,taskKind:"tarea",priority:"media",status:"backlog",blockReason:"",createdAt:today(),deadline:null,completedAt:null,jiraUrl:"",description:"",recurrence:null,checklist:[],contacts:[],labels:[],owner:"",assignees:[]};}
 function mkChkItem(text="",collab=""){return{id:genId(),text,state:"Pendiente",deadline:null,collaborator:collab,nextActions:"",owner:""};}
 function mkMeeting(inheritItems=[]){
   return{id:genId(),meetingId:`M-${Date.now().toString(36).toUpperCase()}`,date:today(),state:"Pendiente",notes:"",done:false,createdAt:today(),completedAt:null,
@@ -128,7 +128,7 @@ function downloadCSV(filename,rows){
   const url=URL.createObjectURL(blob);const a=document.createElement("a");
   a.href=url;a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
 }
-function exportProjectReport(cats,projects,dark,kpiData={},projFrom='',projTo=''){
+function exportProjectReport(cats,projects,dark,kpiData={},projFrom='',projTo='',peopleList=[]){
   const today_=today();
   // Collect all tasks with their labels
   const allTasks=cats.flatMap(c=>c.tasks
@@ -223,9 +223,10 @@ function exportProjectReport(cats,projects,dark,kpiData={},projFrom='',projTo=''
     const PORD={alta:0,media:1,baja:2};
     const sortP=(arr)=>[...arr].sort((a,b)=>(PORD[a.priority||"media"]||1)-(PORD[b.priority||"media"]||1));
 
+    const hasAssignees=tasks.some(t=>(t.assignees||[]).length>0);
+
     const mkRow=(t,type)=>{
-      const owners=[...(t.checklist||[]).map(i=>i.owner).filter(Boolean),...(t.owner?[t.owner]:[])];
-      const uniqueOwners=[...new Set(owners)];
+      const assigneeNames=(t.assignees||[]).map(id=>{const p=peopleList.find(p=>p.id===id);return p?p.name:null;}).filter(Boolean);
       const dl=t.deadline?`<span style="font-size:11px;color:#888">${t.deadline}</span>`:"";
       const statusColors={backlog:{bg:"#F0F0F8",c:"#666"},"en-curso":{bg:"#FFF8E0",c:"#AA8800"},escalado:{bg:"#F3EEFF",c:"#7744CC"},bloqueado:{bg:"#FFF0F0",c:"#CC2222"}};
       const tStatus=t.status||"backlog";
@@ -235,11 +236,10 @@ function exportProjectReport(cats,projects,dark,kpiData={},projFrom='',projTo=''
         ?`<span style="background:#E8FAE8;color:#2A7A34;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;">✓ ${t.completedAt||""}</span>`
         :`<div><span style="background:${sc.bg};color:${sc.c};padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;display:inline-block;white-space:nowrap;">${statusLabel}</span>${tStatus==="bloqueado"&&t.blockReason?`<div style="margin-top:4px;font-size:10px;color:#CC2222;font-style:italic;">🔒 ${t.blockReason}</div>`:""}</div>`;
       const prioColor={alta:"#CC2222",media:"#AA8800",baja:"#2A7A34"}[t.priority||"media"];
-      const ownerStr=uniqueOwners.length>0?`<div style="font-size:11px;color:#666;margin-top:3px;">👤 ${uniqueOwners.join(", ")}</div>`:"";
+      const assigneeCell=hasAssignees?`<td style="padding:10px 12px;border-bottom:1px solid #EEF2F8;vertical-align:top;white-space:nowrap;font-size:11px;color:#444;">${assigneeNames.map(n=>`<span style="display:inline-block;background:#EEF3FB;color:#1A3A6E;padding:1px 7px;border-radius:99px;margin:1px 2px;font-size:10px;font-weight:600;">${n}</span>`).join("")||"—"}</td>`:"";
       return`<tr>
         <td style="padding:10px 12px;border-bottom:1px solid #EEF2F8;vertical-align:top;">
           <div style="font-size:13px;color:#1A1A2E;font-weight:500;">${t.text||""}</div>
-          ${ownerStr}
         </td>
         <td style="padding:10px 12px;border-bottom:1px solid #EEF2F8;vertical-align:top;white-space:nowrap;">
           <span style="font-size:11px;">${t.catIcon||""} ${t.catName||""}</span>
@@ -247,6 +247,7 @@ function exportProjectReport(cats,projects,dark,kpiData={},projFrom='',projTo=''
         <td style="padding:10px 12px;border-bottom:1px solid #EEF2F8;vertical-align:top;white-space:nowrap;">
           <span style="color:${prioColor};font-size:11px;font-weight:700;">${t.priority||"media"}</span>
         </td>
+        ${assigneeCell}
         <td style="padding:10px 12px;border-bottom:1px solid #EEF2F8;vertical-align:top;white-space:nowrap;min-width:110px;">${badge}</td>
       </tr>`;
     };
@@ -300,6 +301,7 @@ function exportProjectReport(cats,projects,dark,kpiData={},projFrom='',projTo=''
             <th style="padding:8px 12px;text-align:left;font-size:11px;color:#1A3A6E;font-weight:700;border-bottom:1px solid #D0DCF0;">Tarea</th>
             <th style="padding:8px 12px;text-align:left;font-size:11px;color:#1A3A6E;font-weight:700;border-bottom:1px solid #D0DCF0;">Categoría</th>
             <th style="padding:8px 12px;text-align:left;font-size:11px;color:#1A3A6E;font-weight:700;border-bottom:1px solid #D0DCF0;">Prioridad</th>
+            ${hasAssignees?'<th style="padding:8px 12px;text-align:left;font-size:11px;color:#1A3A6E;font-weight:700;border-bottom:1px solid #D0DCF0;">Responsable</th>':""}
             <th style="padding:8px 12px;text-align:left;font-size:11px;color:#1A3A6E;font-weight:700;border-bottom:1px solid #D0DCF0;">Estado</th>
           </tr></thead>
           <tbody>${rows}</tbody>
@@ -982,8 +984,7 @@ function Contacts({items=[],color,th,onChange}){
 }
 
 // ── Task Row ──────────────────────────────────────────────────
-const TEAM_MEMBERS=["Ivan","Mar","Shane","Pablo","Pau"];
-function TaskRow({task,color,th,onToggle,onDelete,onUpdate,showInPersonal=false,labelBank=[],onLabelBankChange=()=>{},isTeamCat=false}){
+function TaskRow({task,color,th,onToggle,onDelete,onUpdate,showInPersonal=false,labelBank=[],onLabelBankChange=()=>{},people=[]}){
   const [exp,setExp]=useState(false);const [editT,setEditT]=useState(false);
   const dark=th.bg===DARK.bg;const dl=dlStatus(task.deadline);const p=PRIORITY[task.priority];
   const chkD=(task.checklist||[]).filter(i=>i.done).length;const chkT=(task.checklist||[]).length;
@@ -991,7 +992,6 @@ function TaskRow({task,color,th,onToggle,onDelete,onUpdate,showInPersonal=false,
     <div style={{display:"flex",alignItems:"center",gap:10,padding:"11px 13px",cursor:task.done?"default":"pointer"}} onClick={()=>!task.done&&!editT&&setExp(e=>!e)}>
       <div onClick={e=>{e.stopPropagation();onToggle();}} style={{width:19,height:19,borderRadius:99,flexShrink:0,cursor:"pointer",border:task.done?"none":`2px solid ${color.accent}`,background:task.done?color.accent:"transparent",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,color:"#fff",transition:"all 0.2s"}}>{task.done&&"✓"}</div>
       <span style={{fontSize:10,flexShrink:0}}>{p.dot}</span>
-      {isTeamCat&&task.assignee&&!task.done&&<span style={{fontSize:10,flexShrink:0,fontWeight:700,color:color.tc,background:color.light,padding:"1px 7px",borderRadius:99,whiteSpace:"nowrap"}}>👤 {task.assignee}</span>}
       {editT&&!task.done?(<input autoFocus value={task.text} onChange={e=>onUpdate({text:e.target.value})} onBlur={()=>setEditT(false)} onKeyDown={e=>{if(e.key==="Enter"||e.key==="Escape")setEditT(false);}} onClick={e=>e.stopPropagation()} style={{flex:1,...inp(th,{border:`1px solid ${color.accent}66`,fontSize:13.5,padding:"2px 8px"})}}/>):(
         <span onDoubleClick={e=>{e.stopPropagation();if(!task.done)setEditT(true);}} style={{flex:1,fontSize:13.5,color:task.done?th.text4:th.text2,textDecoration:task.done?"line-through":"none",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{task.text}</span>
       )}
@@ -1000,6 +1000,13 @@ function TaskRow({task,color,th,onToggle,onDelete,onUpdate,showInPersonal=false,
       {chkT>0&&!task.done&&<span style={{fontSize:10,color:chkD===chkT?"#6BCB77":th.text5,flexShrink:0}}>☑ {chkD}/{chkT}</span>}
       {(task.labels||[]).map(lb=>(<span key={lb.id} style={{fontSize:10,fontWeight:600,color:lb.color,background:lb.color+"22",padding:"1px 7px",borderRadius:99,flexShrink:0,border:`1px solid ${lb.color}33`}}>{lb.text}</span>))}
       {dl&&!task.done&&<span style={{fontSize:11,fontWeight:700,color:dl.color,background:dl.color+"22",padding:"2px 8px",borderRadius:99,flexShrink:0}}>{dl.label}</span>}
+      {(task.assignees||[]).length>0&&!task.done&&(()=>{
+        const assigned=people.filter(p=>(task.assignees||[]).includes(p.id));
+        return(<div style={{display:"flex",gap:-4,flexShrink:0}} onClick={e=>e.stopPropagation()}>
+          {assigned.slice(0,3).map((p,i)=>(<PersonAvatar key={p.id} person={p} size={18} style={{marginLeft:i>0?-5:0,zIndex:assigned.length-i}}/>))}
+          {assigned.length>3&&<div style={{width:18,height:18,borderRadius:99,background:th.border2,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:th.text4,fontWeight:700,marginLeft:-5}}>+{assigned.length-3}</div>}
+        </div>);
+      })()}
       {!task.done&&<span style={{color:th.text6,fontSize:11,flexShrink:0,transform:exp?"rotate(180deg)":"none",transition:"transform 0.2s"}}>▾</span>}
       <span onClick={e=>{e.stopPropagation();onDelete();}} style={{color:th.text6,cursor:"pointer",fontSize:13,flexShrink:0}}>✕</span>
     </div>
@@ -1043,13 +1050,7 @@ function TaskRow({task,color,th,onToggle,onDelete,onUpdate,showInPersonal=false,
         </div>
       )}
       <div style={{marginBottom:14}}><SL th={th}>Ticket Jira</SL><div style={{display:"flex",gap:7,alignItems:"center"}}><input value={task.jiraUrl||""} onChange={e=>onUpdate({jiraUrl:e.target.value})} placeholder="https://jira.empresa.com/browse/PROJ-123" style={{...inp(th),flex:1,fontFamily:"monospace"}}/>{task.jiraUrl&&<a href={task.jiraUrl} target="_blank" rel="noreferrer" style={{padding:"5px 10px",borderRadius:7,background:dark?"#0D1E35":"#EBF4FF",border:"1px solid #1A3A6A",color:"#5E9EFF",fontSize:12,textDecoration:"none",fontWeight:700,flexShrink:0}}>Abrir ↗</a>}</div></div>
-      {isTeamCat&&(<div style={{marginBottom:14}}>
-        <SL th={th}>Asignado a</SL>
-        <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
-          <button onClick={()=>onUpdate({assignee:null})} style={{padding:"4px 12px",borderRadius:99,fontSize:11,cursor:"pointer",border:`1.5px solid ${!task.assignee?color.accent:th.border}`,background:!task.assignee?color.light:"transparent",color:!task.assignee?color.tc:th.text5,fontWeight:!task.assignee?700:400}}>— Sin asignar</button>
-          {TEAM_MEMBERS.map(m=>(<button key={m} onClick={()=>onUpdate({assignee:task.assignee===m?null:m})} style={{padding:"4px 12px",borderRadius:99,fontSize:11,cursor:"pointer",border:`1.5px solid ${task.assignee===m?color.accent:th.border}`,background:task.assignee===m?color.light:"transparent",color:task.assignee===m?color.tc:th.text4,fontWeight:task.assignee===m?700:400}}>👤 {m}</button>))}
-        </div>
-      </div>)}
+      <div style={{marginBottom:14}}><SL th={th}>Asignado a</SL><AssigneePicker assignees={task.assignees||[]} people={people} th={th} onChange={ids=>onUpdate({assignees:ids})}/></div>
       <div style={{marginBottom:14}}><SL th={th}>Descripción</SL><textarea value={task.description||""} onChange={e=>onUpdate({description:e.target.value})} placeholder="Contexto, notas..." rows={3} style={{width:"100%",boxSizing:"border-box",...inp(th,{resize:"vertical",lineHeight:1.6,fontFamily:"inherit"})}}/></div>
       <div style={{marginBottom:14}}><Checklist items={task.checklist||[]} color={color} th={th} onChange={cl=>onUpdate({checklist:cl})}/></div>
       <div style={{marginBottom:14}}><Labels labels={task.labels||[]} th={th} bank={labelBank} onBankChange={onLabelBankChange} onChange={lb=>onUpdate({labels:lb})}/></div>
@@ -1460,7 +1461,7 @@ function TasksCalendarView({cats,th,dark,onNavigate,personalOnly=false}){
                   <span style={{fontSize:10,color:t.catColor.tc,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.catName}</span>
                 </div>
                 <div style={{display:"flex",alignItems:"flex-start",gap:4}}>
-                  {t.taskKind&&t.taskKind!=="tarea"&&<span style={{fontSize:9,padding:"1px 6px",borderRadius:99,fontWeight:700,flexShrink:0,background:TASK_KIND[t.taskKind]?.bg,color:TASK_KIND[t.taskKind]?.color,border:`1px solid ${TASK_KIND[t.taskKind]?.color}44`}}>{TASK_KIND[t.taskKind]?.label}</span>}
+                  {t.taskKind&&(t.taskKind==="reminder"||t.taskKind==="reunion")&&<span style={{fontSize:9,flexShrink:0,color:"#aaa",fontStyle:"italic",whiteSpace:"nowrap"}}>{TASK_KIND[t.taskKind]?.label}</span>}
                   {t.priority&&<span style={{fontSize:9,marginTop:2,flexShrink:0}}>{PRIORITY[t.priority]?.dot}</span>}
                   <div style={{fontSize:11.5,color:th.text2,lineHeight:1.3,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{t.text}</div>
                 </div>
@@ -1527,7 +1528,7 @@ function PersonalView({cat,th,dark,calData,onToggle,onDelete,onUpdate,onAddTask,
           <div style={{fontSize:11,marginTop:3}}>No hay tareas personales pendientes</div>
         </div>
       ):(
-        pend.map(t=>(<TaskRow key={t.id} task={t} color={color} th={th} onToggle={()=>onToggle(t.id)} onDelete={()=>onDelete(t.id)} onUpdate={p=>onUpdate(t.id,p)} labelBank={labelBank} onLabelBankChange={onLabelBankChange} isTeamCat={false}/>))
+        pend.map(t=>(<TaskRow key={t.id} task={t} color={color} th={th} onToggle={()=>onToggle(t.id)} onDelete={()=>onDelete(t.id)} onUpdate={p=>onUpdate(t.id,p)} labelBank={labelBank} onLabelBankChange={onLabelBankChange} people={[]}/>))
       )}
     </div>
 
@@ -1919,7 +1920,161 @@ function KPITableEditor({table,th,onUpdate,onDelete}){
   );
 }
 
-function KPITab({th,dark,labelBank}){
+// ── People Tab ───────────────────────────────────────────────
+const PEOPLE_COLORS=["#FF6B6B","#FF9F43","#FFD93D","#6BCB77","#4ECDC4","#74B9FF","#C3A6FF","#FD79A8","#55EFC4","#A0A0B8"];
+function usePeople(){
+  const load=()=>{try{const v=localStorage.getItem("mdt_people");return v?JSON.parse(v):{teams:[],people:[]};}catch{return{teams:[],people:[];}};};
+  const [data,setDataRaw]=useState(load);
+  const setData=(next)=>{setDataRaw(next);try{localStorage.setItem("mdt_people",JSON.stringify(next));}catch{}};
+  const addTeam=(name,color)=>{setData({...data,teams:[...data.teams,{id:genId(),name,color}]});};
+  const updateTeam=(id,patch)=>setData({...data,teams:data.teams.map(t=>t.id===id?{...t,...patch}:t)});
+  const deleteTeam=(id)=>setData({...data,teams:data.teams.filter(t=>t.id!==id),people:data.people.filter(p=>p.teamId!==id)});
+  const addPerson=(name,color,teamId)=>setData({...data,people:[...data.people,{id:genId(),name,color,teamId:teamId||null}]});
+  const updatePerson=(id,patch)=>setData({...data,people:data.people.map(p=>p.id===id?{...p,...patch}:p)});
+  const deletePerson=(id)=>setData({...data,people:data.people.filter(p=>p.id!==id)});
+  return{...data,addTeam,updateTeam,deleteTeam,addPerson,updatePerson,deletePerson,reload:()=>setDataRaw(load())};
+}
+
+function PersonAvatar({person,size=24,style={}}){
+  const initials=(person.name||"?").split(" ").map(w=>w[0]).slice(0,2).join("").toUpperCase();
+  return(<div style={{width:size,height:size,borderRadius:99,background:person.color+"33",border:`1.5px solid ${person.color}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*0.38,fontWeight:800,color:person.color,flexShrink:0,...style}} title={person.name}>{initials}</div>);
+}
+
+function AssigneePicker({assignees=[],people=[],th,onChange}){
+  const dark=th.bg===DARK.bg;
+  if(people.length===0)return(<div style={{fontSize:11,color:th.text5,fontStyle:"italic"}}>Sin personas configuradas — ve a la pestaña Personas para añadir.</div>);
+  return(<div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+    {people.map(p=>{
+      const sel=(assignees||[]).includes(p.id);
+      return(<button key={p.id} onClick={()=>{const cur=assignees||[];onChange(sel?cur.filter(id=>id!==p.id):[...cur,p.id]);}}
+        style={{display:"flex",alignItems:"center",gap:6,padding:"4px 10px 4px 5px",borderRadius:99,border:`1.5px solid ${sel?p.color:th.border}`,background:sel?p.color+"22":"transparent",cursor:"pointer",transition:"all 0.15s"}}>
+        <PersonAvatar person={p} size={20}/>
+        <span style={{fontSize:11,fontWeight:sel?700:400,color:sel?p.color:th.text4}}>{p.name}</span>
+      </button>);
+    })}
+  </div>);
+}
+
+function PeopleTab({th,dark}){
+  const {teams,people,addTeam,updateTeam,deleteTeam,addPerson,updatePerson,deletePerson}=usePeople();
+  const [newTeamName,setNewTeamName]=useState("");
+  const [newTeamColor,setNewTeamColor]=useState(PEOPLE_COLORS[5]);
+  const [addingTeam,setAddingTeam]=useState(false);
+  const [editTeamId,setEditTeamId]=useState(null);
+  const [addingPersonTeam,setAddingPersonTeam]=useState(null); // teamId or "none"
+  const [newPersonName,setNewPersonName]=useState("");
+  const [newPersonColor,setNewPersonColor]=useState(PEOPLE_COLORS[0]);
+  const [editPersonId,setEditPersonId]=useState(null);
+  const [editPersonName,setEditPersonName]=useState("");
+  const cardBg=dark?"#1A2535":"#fff";
+
+  const unassigned=people.filter(p=>!p.teamId||!teams.find(t=>t.id===p.teamId));
+  const allGroups=[...teams.map(t=>({...t,members:people.filter(p=>p.teamId===t.id)})),...(unassigned.length>0?[{id:"none",name:"Sin equipo",color:"#A0A0B8",members:unassigned}]:[])];
+
+  return(<div style={{padding:"20px 0"}}>
+    <div style={{marginBottom:20}}>
+      <h2 style={{color:th.text,fontSize:18,fontWeight:800,margin:0}}>Personas</h2>
+      <p style={{color:th.text5,fontSize:11,margin:"3px 0 0"}}>{people.length} persona{people.length!==1?"s":""} · {teams.length} equipo{teams.length!==1?"s":""}</p>
+    </div>
+
+    {/* Teams */}
+    {allGroups.map(team=>(
+      <div key={team.id} style={{background:cardBg,borderRadius:14,border:`1px solid ${th.border2}`,overflow:"hidden",marginBottom:16}}>
+        {/* Team header */}
+        <div style={{padding:"12px 16px",borderBottom:`1px solid ${th.border2}`,background:dark?"#151D2B":"#F7FAFF",display:"flex",alignItems:"center",gap:10}}>
+          <div style={{width:10,height:10,borderRadius:99,background:team.color,flexShrink:0}}/>
+          {editTeamId===team.id&&team.id!=="none"?(
+            <input autoFocus value={team.name} onChange={e=>updateTeam(team.id,{name:e.target.value})}
+              onBlur={()=>setEditTeamId(null)} onKeyDown={e=>e.key==="Enter"&&setEditTeamId(null)}
+              style={{fontSize:13,fontWeight:800,color:team.color,background:"transparent",border:"none",borderBottom:`2px solid ${team.color}`,outline:"none",flex:1}}/>
+          ):(
+            <span style={{fontSize:13,fontWeight:800,color:dark?team.color:team.color,flex:1}}>{team.name}</span>
+          )}
+          <span style={{fontSize:11,color:th.text5,background:th.border2,padding:"1px 8px",borderRadius:99}}>{team.members.length}</span>
+          {team.id!=="none"&&<>
+            <div style={{display:"flex",gap:3}}>
+              {PEOPLE_COLORS.map(c=><div key={c} onClick={()=>updateTeam(team.id,{color:c})} style={{width:12,height:12,borderRadius:99,background:c,cursor:"pointer",border:team.color===c?`2px solid ${th.text}`:"2px solid transparent"}}/>)}
+            </div>
+            <span onClick={()=>setEditTeamId(team.id)} style={{color:th.text5,cursor:"pointer",fontSize:11}}>✎</span>
+            <span onClick={()=>{if(window.confirm(`¿Eliminar equipo "${team.name}"? Las personas pasarán a Sin equipo.`))deleteTeam(team.id);}} style={{color:th.text6,cursor:"pointer",fontSize:12}}>✕</span>
+          </>}
+        </div>
+        {/* Members */}
+        <div style={{padding:"10px 16px",display:"flex",flexWrap:"wrap",gap:8}}>
+          {team.members.map(p=>(
+            <div key={p.id} style={{display:"flex",alignItems:"center",gap:7,padding:"6px 10px 6px 7px",borderRadius:99,background:p.color+"15",border:`1.5px solid ${p.color}44`}}>
+              <PersonAvatar person={p} size={26}/>
+              {editPersonId===p.id?(
+                <input autoFocus value={editPersonName} onChange={e=>setEditPersonName(e.target.value)}
+                  onBlur={()=>{if(editPersonName.trim())updatePerson(p.id,{name:editPersonName.trim()});setEditPersonId(null);}}
+                  onKeyDown={e=>e.key==="Enter"&&(editPersonName.trim()&&updatePerson(p.id,{name:editPersonName.trim()}),setEditPersonId(null))}
+                  style={{fontSize:12,fontWeight:700,color:p.color,background:"transparent",border:"none",borderBottom:`1px solid ${p.color}`,outline:"none",width:90}}/>
+              ):(
+                <span style={{fontSize:12,fontWeight:700,color:dark?p.color:p.color}}>{p.name}</span>
+              )}
+              <div style={{display:"flex",gap:2,marginLeft:2}}>
+                {PEOPLE_COLORS.map(c=><div key={c} onClick={()=>updatePerson(p.id,{color:c})} style={{width:10,height:10,borderRadius:99,background:c,cursor:"pointer",border:p.color===c?`2px solid ${th.text}`:"2px solid transparent"}}/>)}
+              </div>
+              {teams.length>0&&team.id!=="none"&&(
+                <select value={p.teamId||""} onChange={e=>updatePerson(p.id,{teamId:e.target.value||null})}
+                  style={{fontSize:10,background:"transparent",border:"none",color:th.text5,cursor:"pointer",outline:"none",maxWidth:80}}>
+                  <option value="">Sin equipo</option>
+                  {teams.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}
+                </select>
+              )}
+              <span onClick={()=>{setEditPersonId(p.id);setEditPersonName(p.name);}} style={{color:th.text5,cursor:"pointer",fontSize:10}}>✎</span>
+              <span onClick={()=>deletePerson(p.id)} style={{color:th.text6,cursor:"pointer",fontSize:12}}>✕</span>
+            </div>
+          ))}
+          {team.members.length===0&&<span style={{fontSize:11,color:th.text6,fontStyle:"italic",padding:"4px 0"}}>Sin personas en este equipo</span>}
+          {/* Add person button */}
+          {addingPersonTeam===team.id?(
+            <div style={{display:"flex",alignItems:"center",gap:6,padding:"5px 8px",borderRadius:99,background:th.surface2,border:`1px solid ${th.border2}`}}>
+              <input autoFocus value={newPersonName} onChange={e=>setNewPersonName(e.target.value)}
+                onKeyDown={e=>e.key==="Enter"&&newPersonName.trim()&&(addPerson(newPersonName.trim(),newPersonColor,team.id==="none"?null:team.id),setNewPersonName(""),setAddingPersonTeam(null))}
+                placeholder="Nombre..." style={{background:"transparent",border:"none",outline:"none",fontSize:12,color:th.text,width:100}}/>
+              <div style={{display:"flex",gap:3}}>
+                {PEOPLE_COLORS.map(c=><div key={c} onClick={()=>setNewPersonColor(c)} style={{width:12,height:12,borderRadius:99,background:c,cursor:"pointer",border:newPersonColor===c?`2px solid ${th.text}`:"2px solid transparent"}}/>)}
+              </div>
+              <button onClick={()=>{if(newPersonName.trim()){addPerson(newPersonName.trim(),newPersonColor,team.id==="none"?null:team.id);setNewPersonName("");setAddingPersonTeam(null);}}}
+                style={{padding:"3px 10px",borderRadius:99,background:newPersonColor,border:"none",color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}}>＋</button>
+              <span onClick={()=>setAddingPersonTeam(null)} style={{color:th.text6,cursor:"pointer",fontSize:12}}>✕</span>
+            </div>
+          ):(
+            <button onClick={()=>{setAddingPersonTeam(team.id);setNewPersonName("");setNewPersonColor(PEOPLE_COLORS[people.length%PEOPLE_COLORS.length]);}}
+              style={{display:"flex",alignItems:"center",gap:5,padding:"5px 12px",borderRadius:99,border:`1.5px dashed ${th.border}`,background:"transparent",color:th.text5,fontSize:11,cursor:"pointer"}}>
+              ＋ Añadir persona
+            </button>
+          )}
+        </div>
+      </div>
+    ))}
+
+    {/* Add team */}
+    {addingTeam?(
+      <div style={{background:cardBg,borderRadius:12,border:`1px solid ${th.border2}`,padding:"14px 16px",marginBottom:12}}>
+        <div style={{fontSize:11,fontWeight:700,color:th.text5,textTransform:"uppercase",letterSpacing:1,marginBottom:10}}>Nuevo equipo</div>
+        <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+          <input autoFocus value={newTeamName} onChange={e=>setNewTeamName(e.target.value)}
+            onKeyDown={e=>e.key==="Enter"&&newTeamName.trim()&&(addTeam(newTeamName.trim(),newTeamColor),setNewTeamName(""),setAddingTeam(false))}
+            placeholder="Nombre del equipo..." style={{...inp(th),flex:1,minWidth:150}}/>
+          <div style={{display:"flex",gap:4}}>
+            {PEOPLE_COLORS.map(c=><div key={c} onClick={()=>setNewTeamColor(c)} style={{width:16,height:16,borderRadius:99,background:c,cursor:"pointer",border:newTeamColor===c?`2px solid ${th.text}`:"2px solid transparent"}}/>)}
+          </div>
+          <button onClick={()=>{if(newTeamName.trim()){addTeam(newTeamName.trim(),newTeamColor);setNewTeamName("");setAddingTeam(false);}}}
+            style={{padding:"7px 16px",borderRadius:9,background:"#1A3A6E",border:"none",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>Crear</button>
+          <button onClick={()=>setAddingTeam(false)} style={{padding:"7px 12px",borderRadius:9,background:th.border,border:"none",color:th.text4,fontSize:12,cursor:"pointer"}}>✕</button>
+        </div>
+      </div>
+    ):(
+      <button onClick={()=>setAddingTeam(true)} style={{width:"100%",padding:"14px",borderRadius:12,border:`1.5px dashed ${th.border}`,background:"transparent",color:th.text5,fontSize:12,fontWeight:600,cursor:"pointer"}}>
+        ＋ Nuevo equipo
+      </button>
+    )}
+  </div>);
+}
+
+
   const loadKPIs=(proj)=>{
     try{
       const v=localStorage.getItem("mdt_kpis_"+proj);
@@ -2201,6 +2356,7 @@ export default function App(){
     try{const v=localStorage.getItem("mdt_labels");return v?JSON.parse(v):[];}catch{return[];}
   });
   const setLabelBank=(next)=>{setLabelBankRaw(next);try{localStorage.setItem("mdt_labels",JSON.stringify(next));}catch{}};
+  const peopleData=usePeople();
 
   const allTasks=cats.flatMap(c=>c.tasks.map(t=>{
     // Enrich meeting tasks with readable text
@@ -2310,6 +2466,7 @@ export default function App(){
     <SI id="cal-tareas" label="Calendario tareas" icon="📌" badge={0}/>
     <SI id="history" label={`Historial (${totalDone})`} icon="✓" badge={0}/>
     <SI id="kpis" label="KPIs" icon="📊" badge={0}/>
+    <SI id="personas" label="Personas" icon="👤" badge={0}/>
     <div style={{height:1,background:th.border3,margin:"9px 4px"}}/>
     <p style={{margin:"0 0 7px 6px",color:th.text6,fontSize:10,fontWeight:700,letterSpacing:2,textTransform:"uppercase"}}>Categorías</p>
     {cats.map(c=>(
@@ -2346,7 +2503,7 @@ export default function App(){
         <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
           <div style={{height:4,width:80,background:th.border2,borderRadius:99}}><div style={{height:4,borderRadius:99,transition:"width 0.5s",width:totalAll?`${(totalDone/totalAll)*100}%`:"0%",background:"linear-gradient(90deg,#4ECDC4,#6BCB77)"}}/></div>
           <span style={{color:"#4ECDC4",fontWeight:800,fontSize:11}}>{totalAll?Math.round((totalDone/totalAll)*100):0}%</span>
-          <span style={{color:"#fff",fontSize:10,fontWeight:700,background:"#6633CC",padding:"3px 9px",borderRadius:6,flexShrink:0,whiteSpace:"nowrap"}} title="Último deploy">🕐 v1.11 · {BUILD_TIME.slice(5,10)} {BUILD_TIME.slice(11,16)}</span>
+          <span style={{color:"#fff",fontSize:10,fontWeight:700,background:"#6633CC",padding:"3px 9px",borderRadius:6,flexShrink:0,whiteSpace:"nowrap"}} title="Último deploy">🕐 v1.12 · {BUILD_TIME.slice(5,10)} {BUILD_TIME.slice(11,16)}</span>
           <button onClick={()=>{const data={version:1,exportedAt:new Date().toISOString(),cats};const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=`mardetareas_backup_${today()}.json`;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);}} style={{padding:"5px 9px",borderRadius:99,border:`1px solid ${th.border}`,background:"transparent",color:"#6BCB77",fontSize:11,cursor:"pointer",fontWeight:700}}>⬇ Backup</button>
           <label style={{padding:"5px 9px",borderRadius:99,border:`1px solid ${th.border}`,background:"transparent",color:"#74B9FF",fontSize:11,cursor:"pointer",fontWeight:700}}>⬆ Restaurar<input type="file" accept=".json" style={{display:"none"}} onChange={e=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=ev=>{try{const data=JSON.parse(ev.target.result);if(!data.cats)throw new Error();if(window.confirm(`¿Restaurar backup del ${new Date(data.exportedAt).toLocaleDateString("es-ES")}?`)){setCatsP(data.cats);window.location.reload();}}catch{alert("Archivo no válido.");}};reader.readAsText(file);e.target.value="";}} /></label>
           <button onClick={()=>setDarkP(d=>!d)} style={{padding:"5px 9px",borderRadius:99,border:`1px solid ${th.border}`,background:th.surface,color:th.text3,fontSize:13,cursor:"pointer"}}>{dark?"☀️":"🌙"}</button>
@@ -2532,7 +2689,7 @@ export default function App(){
                 </div>
               </div>
               {sorted.length===0&&<p style={{color:th.text6,fontSize:13,textAlign:"center",paddingTop:28}}>{activeLF?`Sin tareas con etiqueta "${activeLF}" 🏷️`:"Sin tareas aún 🚀"}</p>}
-              {sorted.map(t=>(<TaskRow key={t.id} task={t} color={color} th={th} onToggle={()=>togTask(cat.id,t.id)} onDelete={()=>delTask(cat.id,t.id)} onUpdate={p=>updTask(cat.id,t.id,p)} labelBank={labelBank} onLabelBankChange={setLabelBank} isTeamCat={cat.type==="tasks"&&cat.name==="Equipo"}/>))}
+              {sorted.map(t=>(<TaskRow key={t.id} task={t} color={color} th={th} onToggle={()=>togTask(cat.id,t.id)} onDelete={()=>delTask(cat.id,t.id)} onUpdate={p=>updTask(cat.id,t.id,p)} labelBank={labelBank} onLabelBankChange={setLabelBank} people={peopleData.people}/>))}
             </div>);
           })()}
 
@@ -2654,7 +2811,7 @@ export default function App(){
                 <input type="date" value={projTo} onChange={e=>setProjTo(e.target.value)} style={{...inp(th,{fontSize:11,padding:"4px 8px",colorScheme:dark?"dark":"light"})}}/>
                 {(projFrom||projTo)&&<button onClick={()=>{setProjFrom("");setProjTo("");}} style={{padding:"4px 10px",borderRadius:7,background:th.border,border:"none",color:th.text4,fontSize:11,cursor:"pointer"}}>✕ Limpiar</button>}
               </div>
-              <button onClick={()=>exportProjectReport(cats,selProjects,dark,Object.fromEntries(selProjects.map(p=>[p,JSON.parse(localStorage.getItem('mdt_kpis_'+p)||'[]')])),projFrom,projTo)} style={{marginTop:12,padding:"8px 16px",borderRadius:9,background:dark?"#0D1E35":"#E8EEF8",border:"1px solid #1A3A6E44",color:"#1A3A6E",fontSize:12,fontWeight:700,cursor:"pointer"}}>⬇ Generar informe ejecutivo (HTML+PDF)</button>
+              <button onClick={()=>exportProjectReport(cats,selProjects,dark,Object.fromEntries(selProjects.map(p=>[p,JSON.parse(localStorage.getItem('mdt_kpis_'+p)||'[]')])),projFrom,projTo,peopleData.people)} style={{marginTop:12,padding:"8px 16px",borderRadius:9,background:dark?"#0D1E35":"#E8EEF8",border:"1px solid #1A3A6E44",color:"#1A3A6E",fontSize:12,fontWeight:700,cursor:"pointer"}}>⬇ Generar informe ejecutivo (HTML+PDF)</button>
             </>)}
                 </div>
                 {selProjects.length===0&&<p style={{color:th.text6,fontSize:13,textAlign:"center",paddingTop:20}}>Selecciona uno o más proyectos para generar el informe.</p>}
@@ -2678,6 +2835,9 @@ export default function App(){
 
           {/* ── KPI Tab ── */}
           {tab==="kpis"&&<KPITab th={th} dark={dark} labelBank={labelBank}/>}
+
+          {/* ── Personas Tab ── */}
+          {tab==="personas"&&<PeopleTab th={th} dark={dark}/>}
         </div>
       </div>
 
