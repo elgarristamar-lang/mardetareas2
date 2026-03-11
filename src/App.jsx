@@ -1821,7 +1821,7 @@ function AyudaTab({th,dark}){
         {k:"Prioridad",v:"Alta 🔴 · Media 🟡 · Baja 🟢. Afecta al orden y al color del dot en fila."},
         {k:"Estado",v:"Backlog → En curso → Escalado → Bloqueado. Los estados distintos de Backlog aparecen como badge bajo el texto."},
         {k:"Bloqueo",v:"Al marcar 'Bloqueado' aparece campo para describir el motivo. Visible en el informe ejecutivo."},
-        {k:"Deadline",v:"Fecha límite con colores de urgencia: verde (>3d), amarillo (≤3d), naranja (hoy), rojo (vencida)."},
+        {k:"Deadline",v:"Fecha límite con colores de urgencia: verde (+3d), amarillo (≤3d), naranja (hoy), rojo (vencida)."},
         {k:"Recurrencia",v:"Diaria · Semanal · Quincenal · Mensual. Al completar la tarea, el deadline avanza automáticamente."},
         {k:"JIRA",v:"Campo URL. Si se rellena aparece badge 'JIRA ↗' en la fila con enlace directo."},
         {k:"Descripción",v:"Texto libre de contexto y notas. Solo visible en el panel expandido."},
