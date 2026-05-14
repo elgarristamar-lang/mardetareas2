@@ -1,24 +1,20 @@
-export const config = { runtime: 'edge' };
+export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-export default async function handler(req) {
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, x-api-key',
-      }
-    });
+    return res.status(200).end();
   }
 
   if (req.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { pdfBase64, apiKey } = await req.json();
+    const { pdfBase64, apiKey } = req.body;
     if (!pdfBase64 || !apiKey) {
-      return new Response(JSON.stringify({ error: 'Faltan parámetros' }), { status: 400 });
+      return res.status(400).json({ error: 'Faltan parámetros' });
     }
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -35,27 +31,15 @@ export default async function handler(req) {
           role: 'user',
           content: [
             { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: pdfBase64 } },
-            { type: 'text', text: `Analiza este informe de proyectos mardetareas y extrae TODAS las tareas.
-Responde SOLO con un JSON válido, sin texto extra, sin backticks:
-{"projectName":"nombre del proyecto","tasks":[{"text":"nombre tarea","status":"completada|en-curso|bloqueado|backlog","priority":"alta|media|baja","completedAt":"YYYY-MM-DD o null","deadline":"YYYY-MM-DD o null","blockReason":"motivo o null"}]}
-Reglas: completadas llevan status=completada y completedAt con fecha. Bloqueadas llevan blockReason. Extrae TODAS las tareas visibles.` }
+            { type: 'text', text: `Analiza este informe de proyectos mardetareas y extrae TODAS las tareas. Responde SOLO con un JSON válido, sin texto extra, sin backticks: {"projectName":"nombre del proyecto","tasks":[{"text":"nombre tarea","status":"completada|en-curso|bloqueado|backlog","priority":"alta|media|baja","completedAt":"YYYY-MM-DD o null","deadline":"YYYY-MM-DD o null","blockReason":"motivo o null"}]} Reglas: completadas llevan status=completada y completedAt con fecha. Bloqueadas llevan blockReason. Extrae TODAS las tareas visibles.` }
           ]
         }]
       })
     });
 
     const data = await response.json();
-    return new Response(JSON.stringify(data), {
-      status: response.status,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      }
-    });
+    return res.status(response.status).json(data);
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-    });
+    return res.status(500).json({ error: err.message });
   }
 }
