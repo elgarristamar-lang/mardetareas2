@@ -2018,7 +2018,7 @@ function AyudaTab({th,dark}){
   </div>);
 }
 
-
+function KPITableEditor({table,th,onUpdate,onDelete}){
   const [editCell,setEditCell]=useState(null);
   const [editObj,setEditObj]=useState(false);
   const [showGraph,setShowGraph]=useState(true);
